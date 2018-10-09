@@ -1,4 +1,7 @@
 import numpy as np
+from scipy.interpolate import *
+from DataCleaner import *
+
 
 #will split the data into 3 vectors
 #sample, verify, test
@@ -69,6 +72,68 @@ def SplitData(data, split):
     return
 
 
+def GetPart(vector, exclude):
+
+    retvect = []
+
+    for i in range(len(vector)):
+        if i != exclude:
+            retvect.append(vector[i])
+
+    return  retvect
+
+def GetColumn(array2d, col):
+
+    retlist = []
+    for entry in array2d:
+
+        item = entry[col]
+
+        retlist.append(item)
+
+    return retlist
+
+
+def GetColumnFloat(array2d, col):
+
+    retlist = []
+    for entry in array2d:
+
+        item = float(entry[col])
+
+        retlist.append(item)
+
+    return retlist
+
+
+def GetGrouping2Dremove(list, rs, re, cs, ce, rmv):
+
+    retlist = []
+
+    for r in range(rs, re+1):
+        row = list[r][cs:ce+1]
+
+        row = GetPart(row,rmv)
+
+        retlist.append(row)
+
+    return retlist
+
+
+
+def GetGrouping2D(list, rs, re, cs, ce):
+
+    retlist = []
+
+    for r in range(rs, re+1):
+        row = list[r][cs:ce+1]
+
+        retlist.append(row)
+
+    return retlist
+
+
+
 def GDataSpliter(data, splitVal, inc):
 
     test = []
@@ -82,7 +147,7 @@ def GDataSpliter(data, splitVal, inc):
     #get how much data you have
     datacount = len(data)
 
-    splitcount = int(datacount/16) + inc
+    splitcount = int(datacount/splitVal) + inc
 
     left_ovr = datacount-splitcount
 
@@ -105,7 +170,8 @@ def GDataSpliter(data, splitVal, inc):
         test.append(list)
     #####################################################33
 
-    verend = int(splitcount + splitcount/2)
+    verend = int(splitcount + splitcount/2)-5
+    #verend = int(splitcount + left_ovr/2)
 
     #grab verification data
     for idx in range(splitcount, verend):
@@ -136,7 +202,7 @@ def GDataSpliter(data, splitVal, inc):
     return test, verify, validate, Ytest, Yver, Yvali
 
 
-
+#grabs a section of data of data from given data array
 def GrabData(data, startrow, stoprow, startcol, stopcol):
 
     retdata = []
@@ -150,38 +216,52 @@ def GrabData(data, startrow, stoprow, startcol, stopcol):
         retdata.append(list)
     return retdata
 
-def Gmake(data):
 
-
-
-    return
-
+#will make an array containing averages of each
+#column of data as an entry. Should be given a fixed
+#data set
 def GmakeMeanArray(data):
 
     meanArray = []
 
+    #go through each column row by row
+    #summing entries and getting averages
     for col in range(0,8):
         sum = 0
         for row in range(len(data)):
             sum += float(data[row][col])
 
-        mean = sum/len(data)
         meanArray.append( (sum/(len(data))) )
 
     return meanArray
 
+
 def GMulLinReg(indData, depData):
 
+    #make numpy arrays
     X = np.array(indData, dtype=np.float64)
     Y = np.array(depData, dtype=np.float64)
+
+    #get the transpose for the calculation
     Xtran = np.transpose(X)
+
+    #calculate  Xtranpose * X
     XtranX = np.dot(Xtran, X)
+
+
+    #calculate  get the inverse
     XTXinv = np.linalg.inv(XtranX)
+
+    #calculate Xtranpose*X_inverse * Xtranspose
     XTXinvXT = np.dot(XTXinv, Xtran)
+
+    #calculate the W(parameter) vector
     W = np.dot(XTXinvXT, Y)
 
     return W
 
+#will use the independent data(Xdata) and the given params(Wparams)
+#and return an dependent(Y) array
 def TestModel(Xdata, Wparams):
 
     ansArray = []
@@ -191,9 +271,11 @@ def TestModel(Xdata, Wparams):
 
     return np.array(ansArray, dtype=np.float64)
 
+
+#calculates the Mean square error of the model using the validation data
 def CalculateMSE(Gmodel, Rvalidate):
 
-
+    #get the mean of the validation data
     Rmean = np.mean(Rvalidate)
     bottom = 0
     top = 0
@@ -217,11 +299,26 @@ def GTrainer(DataArray):
     datasize = len(DataArray)
 
     bestinc = 0
+    bestinc2 = 0
     RSE = 0
 
+    RSE2 = 0
+    bestTestSize = 0
+    bestTestSize2 = 0
 
-    while (datasize/2 + inc < 350):
-        test, verify, validate, Ytest, Yver, Yvali = GDataSpliter(DataArray, 1, inc)
+    splitval = 16
+
+    #Yvali = []
+
+    while ( int(datasize/splitval) + inc < 398):
+
+        testsize = int(datasize/splitval) + inc
+
+
+        left_ovr = datasize - testsize
+
+        #split the data into parts
+        test, verify, validate, Ytest, Yver, Yvali = GDataSpliter(DataArray, splitval, inc)
 
         # perform Multiple linear regression
         WparamsT = GMulLinReg(test, Ytest)
@@ -229,20 +326,110 @@ def GTrainer(DataArray):
         GdataVer = TestModel(verify, WparamsT)
 
         RSEnew = CalculateMSE(GdataVer, np.array(Yver, dtype=np.float64))
-        print("new " + str(RSEnew) )
+        print("new ver " + str(RSEnew) )
+
+
+        Gdatavall = TestModel(validate, WparamsT)
+        RSEvall = CalculateMSE(Gdatavall, np.array(Yvali, dtype=np.float64))
+        print("new vall" + str(RSEvall) )
+
+
+        #if a better error marker is found save the parameters that
+        #got to it
         if RSEnew > RSE:
             RSE = RSEnew
             bestinc = inc
+            bestTestSize = testsize
+            print("a better count is " + str(inc))
+
+        if RSEvall > RSE2:
+            RSE2 = RSEvall
+            bestinc2 = inc
+            bestTestSize2 = testsize
             print("a better count is " + str(inc))
 
         inc +=1
 
 
-        splitcount = int(datasize / 2) + inc
+        splitcount = int(datasize / splitval) + inc
 
         verend = int(splitcount + splitcount / 2)
         if verend >= datasize:
             print("too big at " + str(verend))
             break
 
-    return RSE  ,bestinc
+    print("testL verL valL")
+    print(len(test), len(verify), len(validate))
+
+    Gdataval = TestModel(validate, WparamsT)
+    RSEval = CalculateMSE(Gdataval, np.array(Yvali, dtype=np.float64))
+
+    print("best vali: " + str(RSE2) +" bestinc2 "+ str(bestinc2)+" besttestsize2 "+ str(bestTestSize2))
+    print("the val coefficient of determination: " + str(RSEval))
+
+    return RSE, bestinc, bestTestSize
+
+def FindBadDataPoints(data, sig):
+
+    badDataDic = {}
+    collist = []
+
+
+    r = 0
+
+    for row in data:
+        c = 0
+        for col in row:
+
+            if col == sig:
+
+                if c not in badDataDic:
+                    list = [r]
+                    collist.append(c)
+                    badDataDic[c] = list
+                else:
+                    badDataDic[c].append(r)
+            c += 1
+
+        r += 1
+    return badDataDic, collist
+
+def GetBadColumns(dic):
+
+    retdic = {}
+
+    for item in dic:
+        col = dic[item]
+        if col not in retdic:
+            list = [item]
+            retdic[col] = list
+        else:
+            retdic[col].append(item)
+        #print(dic[item])
+
+    return retdic
+
+
+def FixBadDataMLR(data ):
+
+    fixedMLR = []
+
+
+    independentdata = GetColumnFloat(data, attribs['mpg'])
+    dependentdata = GetColumnFloat(data, attribs['horsepower'])
+
+    id = np.array(independentdata)
+    dd = np.array(dependentdata)
+
+    p1 = np.polyfit(dd, id, 1)
+
+    print(p1)
+
+    #find bad data if any
+    #badDic, rowlist = FindBadDataPoints(data, sig)
+
+    #get the colums you need to focus on
+
+
+    return fixedMLR
+

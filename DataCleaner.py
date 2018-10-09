@@ -6,36 +6,34 @@ import GDataWorks
 
 #opens the given file and returns the lines of the file as an array
 #where each row is a line and each line is made into a vector
-#where the strings of the line are an entry in the row vector excpet the last which is the car name
+#where the strings of the line are an entry in the row vector except the last which is the car name
 #uses the clean line method below
 #row vector is in the form
-# 0       1            2            3         4          5          6           7         8
-#[mpg, cylinders, displacement, horsepower, weight, acceelration, model year, origin, car name]
+# 0         1            2            3         4          5             6         7       8
+#[mpg,  cylinders,  displacement, horsepower, weight, acceelration, model year, origin, car name]
 def DataCleaner(filename):
 
     f = open(filename, 'r')
 
+    #set up and array for the lines in the file
     lines = []
 
-    i = 0
 
     for line in f:
-
+        #TODO: remove this line it is unneccessary
+        #use the clean line method to clean the line of spaces and extra stuff
         newline = CleanLine(line)
+
+        #make sure it is a full line
         if( len(line) < 9):
             continue
         else:
-            #if i >= 5:
-            #    break
             lines.append(CleanLine(line))
 
-           # print("idx: " + str(i))
-            #print(lines[i])
-            #i += 1
-
+    #return the lines of the file as an array
     return lines
 
-#takse a line from a file
+#Take a line from a file
 #expands the tabs into spaces, splits the line by white space up to the car name(index 8)
 #and removes all white space
 def CleanLine(line):
@@ -47,6 +45,7 @@ def CleanLine(line):
     #count how many empty strings need to be removed
     numtogo = retLine.count("")
 
+    #remove the empty strings
     for i in range(numtogo):
         retLine.remove('')
 
@@ -66,13 +65,17 @@ def GetCol(array, col):
     retvec = []
     badData = []
 
+    #move through the rows of the array and grab the
+    #entries at the given column
     for row in range(len(array)):
-        #print("adding "+array[row][col])
-
         entry = array[row][col]
 
+        #if there is not bad data at this entry
+        #add it to the return vector
         if entry != '?':
             retvec.append(array[row][col])
+        #otherwise add a string version of a zero
+        #and store the row where it was
         else:
             #print("found bad data")
             #print("at row " + str(row))
@@ -84,16 +87,23 @@ def GetCol(array, col):
 
 
 
+#Turn data array of strings into a dictionary keyed on the name of the car
+#with values of the index in the array where that car name occurs
 def makeCarDatabase(array):
 
     retDic = {}
     count = 0
     for idx in range( len(array) ):
+        #grab the car name
         carname = array[idx][8]
 
         #print("the car is " + carname)
+        #if the car is in the the map
+        #add the current index into its values
         if carname in retDic:
             retDic[carname].append(idx)
+        #otherwise create an entry into the map keyed on this carname
+        #with a value of the current index in the array where this car occurs
         else:
             nlist = [idx]
 
@@ -122,6 +132,7 @@ def makeColVector(array):
 
 
 #will average a given vector distregarding 0 entries
+#takes a column vector
 def MissingDataAverager(vector):
 
     sum = 0
@@ -160,11 +171,15 @@ def MissingDataAverager(vector):
 
     #go through old array and fix the bad data
     #by replacing with the fixed mean
+    #the fix list contains the indexs of the entrys that need to be fixed
     for entry in fix:
         vector[entry] = str(fixedmean)
     return vector, fixedmean, fix
 
 #will replace bad data points with an averaged data point
+#takes the data array that has entries to be fixed, the column
+#in that array, the fix array containing thro row that needs to be fixed,
+#and the fixed value to be added which is the average of the useable data
 def FixBadDataAVG(dataArray, col, fixArray, fixedval):
 
     for entry in fixArray:
@@ -173,18 +188,32 @@ def FixBadDataAVG(dataArray, col, fixArray, fixedval):
     return dataArray
 
 
-def MakeXYarray(dataArray):
+#maks X array and Y array for multiple linear regression
+def MakeXYarray(dataArray, badDataVal):
+
+    #result array called Y
     Yarray = []
+
+    #input value array called X
     Xarray = []
+
+    #move through rows of data array
     for row in dataArray:
 
+        #grab mpg or output value for this row
         Yarray.append(float(row[0]))
         xlist = []
+
+        #append a 1 where the mpg value was(index 0)
         xlist.append(1.0)
+
+        #move from column 1 to columen 7 to exclude the mpg and the carname repectively
         for i in range(1,8):
             fnum = row[i]
+            #if we find some bad data replace it with the bad data value
             if fnum == '?':
-                fnum = '104.46938775510205'
+                #fnum = '104.46938775510205'
+                 fnum = badDataVal
             xlist.append(float(fnum))
 
         Xarray.append(xlist)
@@ -207,6 +236,7 @@ attribs = {"mpg": 0,
 #Open the car data file and process the file into the data array
 dataArray = DataCleaner("CarData.txt")
 
+print(GDataWorks.FindBadDataPoints(dataArray, '?'))
 print("the length is: " + str(len(dataArray)))
 
 #print original data array
@@ -442,9 +472,9 @@ print(RSEVer)
 print(RSEVal)
 print(BRSE)
 
-BestRse, increment = GDataWorks.GTrainer(fixAvgDataArray)
+BestRse, increment , testsize = GDataWorks.GTrainer(fixAvgDataArray)
 
-print(len(fixAvgDataArray)/2 + 199 )
 
-print(BestRse, increment)
+print("Coefficient of Det.   incr    testsize")
+print(BestRse, increment, testsize)
 
