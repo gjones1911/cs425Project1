@@ -59,6 +59,7 @@ def CleanLine(line):
 
 #returns a the given column of the given array
 #as a vector(list)
+#replaces ? with a zero
 #TODO add a bad data signifier
 def GetCol(array, col):
 
@@ -110,7 +111,10 @@ def makeCarDatabase(array):
             retDic[carname] = nlist
 
     return retDic
-#
+#basically does a transpose operation to make
+#rows into what used to be the columns to make a
+#rows the different attributes
+#uses the GetCol vector which replaces ? with a zero
 def makeColVector(array):
 
     colVecs = []
@@ -133,6 +137,7 @@ def makeColVector(array):
 
 #will average a given vector distregarding 0 entries
 #takes a column vector
+#replaces ? markes with zero's
 def MissingDataAverager(vector):
 
     sum = 0
@@ -219,6 +224,16 @@ def MakeXYarray(dataArray, badDataVal):
         Xarray.append(xlist)
 
     return Xarray, Yarray
+
+
+
+
+
+
+
+
+
+
 ########################################################################################################
 ########################################################################################################
 
@@ -236,14 +251,16 @@ attribs = {"mpg": 0,
 #Open the car data file and process the file into the data array
 dataArray = DataCleaner("CarData.txt")
 
-print(GDataWorks.FindBadDataPoints(dataArray, '?'))
+#print(GDataWorks.FindBadDataPoints(dataArray, '?'))
 print("the length is: " + str(len(dataArray)))
 
 #print original data array
 #print(dataArray)
 
+'''
 #strip out the x(attributes/independent vars) and y(dependent/MPG)
 Xarry, Yarry = MakeXYarray(dataArray)
+'''
 
 '''
 print(Xarry)
@@ -253,44 +270,65 @@ print("length of Y " + str(len(Yarry))+ "\n")
 '''
 
 
-
+'''
 #turn the arrays into np array for some math
 X = np.array(Xarry, dtype=np.float64)
 Y = np.array(Yarry, dtype=np.float64)
 #print("X is..............")
 #print(X)
+'''
 
+'''
 #get the transpose of X
 Xtranspose = np.transpose(X)
+'''
+
 '''
 print("XT is..............")
 print(Xtranspose)
 print("Y is..............")
 print(Y)
 '''
+
+'''
 #get the (dot)product of Xtranspose and X
 XTX = np.dot(Xtranspose, X)
+'''
 
 '''
 print("XTX")
 print(XTX)
 '''
 
+
+'''
 #Get the inverse of of XTX
 invXTX = np.linalg.inv(XTX)
+'''
+
+
 '''
 print(invXTX)
 '''
 
+
+'''
 #get the product of the inverse of XTX and Xtranspose
 XTXinvXT = np.dot(invXTX, Xtranspose)
+'''
 
+'''
 #get the product of the above and the independent var vector
 #which is w or the parameter matrix
 W = np.dot(XTXinvXT, Y)
+'''
 
+
+'''
 print("W.....................................")
 print(W)
+'''
+
 
 #sample = X[0]
 #print(sample)
@@ -306,8 +344,13 @@ print(W)
 #print(GetCol(dataArray, 0))
 
 #create a vector for each attribute
-#will also find bad data points
+#will also find bad data points by making them zeros
+
+'''
 AttribVec = makeColVector(dataArray)
+'''
+
+
 '''
 print("mpg :")
 print(AttribVec[0])
@@ -358,12 +401,14 @@ print(AttribVec[3][374])
 
 
 #dependent variable
-
+'''
 print("the length of the mpg array is "+ str(len(AttribVec[0])))
 mpgArray = np.array(AttribVec[0], dtype=np.float64)
 mpgAvg = np.mean(mpgArray)
 ################################################################
+'''
 
+'''
 cylinderArray = np.array(AttribVec[1], dtype=np.int64)
 cyAvg = np.mean(cylinderArray)
 cySTD = np.std(cylinderArray)
@@ -378,11 +423,13 @@ print(AttribVec[3])
 print(fixval)
 print(fixarray)
 
-#fis the bad data points by replacding with average value
+#fix the bad data points by replacding with average value
 fixAvgDataArray = FixBadDataAVG(dataArray, 3, fixarray, fixval)
 hpArray = np.array(AttribVec[3], dtype=np.float64)
 hpAvg = np.mean(hpArray)
 hpSTD = np.std(hpArray)
+'''
+
 '''
 print(fixAvgDataArray)
 print("\n")
@@ -392,6 +439,7 @@ print(AttribVec[3][330])
 print(AttribVec[3][336])
 print(AttribVec[3][354])
 print(AttribVec[3][374])
+'''
 '''
 weightArray = np.array(AttribVec[4], dtype=np.float64)
 weightAvg = np.mean(weightArray)
@@ -477,4 +525,6 @@ BestRse, increment , testsize = GDataWorks.GTrainer(fixAvgDataArray)
 
 print("Coefficient of Det.   incr    testsize")
 print(BestRse, increment, testsize)
+'''
 
+#print(dataArray)

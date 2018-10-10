@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.interpolate import *
-from DataCleaner import *
+#from DataCleaner import *
 
 
 #will split the data into 3 vectors
@@ -415,8 +415,8 @@ def FixBadDataMLR(data ):
     fixedMLR = []
 
 
-    independentdata = GetColumnFloat(data, attribs['mpg'])
-    dependentdata = GetColumnFloat(data, attribs['horsepower'])
+    independentdata = GetColumnFloat(data, 0)
+    dependentdata = GetColumnFloat(data, 3)
 
     id = np.array(independentdata)
     dd = np.array(dependentdata)
@@ -433,3 +433,41 @@ def FixBadDataMLR(data ):
 
     return fixedMLR
 
+
+#finds bad data points and returns a map
+#keyed on the column and with a value of a list of the
+#rows where the bad data is located
+def FindColBadData(dataarray):
+
+    retdic = {}
+
+    for col in range(len(dataarray[0])):
+
+            for row in range(len(dataarray)):
+
+                if dataarray[row][col] == '?':
+
+                    if col in retdic:
+                        retdic[col].append(row)
+                    else:
+                        rowlist= [row]
+                        retdic[col] = rowlist
+
+    return retdic
+
+
+def MakeDataFloats(data, stop):
+    for row in range(len(data)):
+        for col in range(0, stop):
+            data[row][col] = float(data[row][col])
+
+    return data
+
+def ReplaceBadData(data, baddic, val):
+    for entry in baddic:
+        badlist = baddic[entry]
+        for idx in range(len(badlist)):
+            row = badlist[idx]
+            data[row][entry] = val
+
+    return data
