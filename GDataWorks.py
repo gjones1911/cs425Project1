@@ -455,7 +455,7 @@ def FindColBadData(dataarray):
 
     return retdic
 
-
+#makes the data from col 0 to stop float values
 def MakeDataFloats(data, stop):
     for row in range(len(data)):
         for col in range(0, stop):
@@ -463,11 +463,39 @@ def MakeDataFloats(data, stop):
 
     return data
 
+#replaces bad data with the given value
 def ReplaceBadData(data, baddic, val):
     for entry in baddic:
         badlist = baddic[entry]
         for idx in range(len(badlist)):
             row = badlist[idx]
             data[row][entry] = val
+
+    return data
+
+
+def BadDataAverager(data, col, sigval):
+
+    colsum = 0
+    count = 0
+    for row in range(len(data)):
+
+        val = data[row][col]
+
+        if val != sigval:
+            colsum += val
+            count += 1
+
+    return colsum/count
+
+def AverageReplacer(data, baddic, sigval):
+
+    for entry in baddic:
+        avg = BadDataAverager(data, entry, sigval)
+        print(avg)
+        badlist = baddic[entry]
+
+        for row in badlist:
+            data[row][entry] = avg
 
     return data
