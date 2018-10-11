@@ -60,7 +60,6 @@ def CleanLine(line):
 #returns a the given column of the given array
 #as a vector(list)
 #replaces ? with a zero
-#TODO add a bad data signifier
 def GetCol(array, col):
 
     retvec = []

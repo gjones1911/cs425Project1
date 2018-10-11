@@ -461,7 +461,7 @@ def MakeDataFloats(data, stop):
         for col in range(0, stop):
             data[row][col] = float(data[row][col])
 
-    return data
+    return data.copy()
 
 #replaces bad data with the given value
 def ReplaceBadData(data, baddic, val):
@@ -471,7 +471,7 @@ def ReplaceBadData(data, baddic, val):
             row = badlist[idx]
             data[row][entry] = val
 
-    return data
+    return data.copy()
 
 
 def BadDataAverager(data, col, sigval):
@@ -492,10 +492,170 @@ def AverageReplacer(data, baddic, sigval):
 
     for entry in baddic:
         avg = BadDataAverager(data, entry, sigval)
+
+
+        print('avg:')
         print(avg)
+        print('entry')
+        print(entry)
         badlist = baddic[entry]
 
         for row in badlist:
+            print('adding avg: ' + str(avg) + 'to row '+str(row) + ' and col '+ str(entry) )
+
             data[row][entry] = avg
 
-    return data
+    return data.copy()
+
+def LinearReplacer(data, m, b, Xcol, Ycol, baddataPoints):
+
+    datapointrows = baddataPoints[Ycol]
+
+    for row in datapointrows:
+        x = data[row][Xcol]
+
+        data[row][Ycol] = m*x + b
+
+    return data.copy()
+
+def LinearReggressor(independent, dependent, datatoremove):
+
+    for item in range(len(datatoremove)):
+        del independent[item]
+        del dependent[item]
+
+    print("independent length: ")
+    print(len(independent))
+    print("dependent length: ")
+    print(len(dependent))
+
+
+    coeff = np.polyfit(independent, dependent, 1)
+    return coeff, dependent, independent
+
+def P2Reggressor(independent, dependent, datatoremove):
+
+    for item in range(len(datatoremove)):
+        del independent[item]
+        del dependent[item]
+
+    print("independent length: ")
+    print(len(independent))
+    print("dependent length: ")
+    print(len(dependent))
+
+
+    coeff = np.polyfit(independent, dependent, 2)
+    return coeff, dependent, independent
+
+
+def GetYvals(coef, X):
+
+    Y = []
+
+    m = coef[0]
+    b = coef[1]
+
+    for idx in range(len(X)):
+
+        val = m*X[idx]+b
+        Y.append(val)
+
+
+    return Y
+
+def GetYvalsP2(coef, X):
+
+    Y = []
+
+    mx2 = coef[0]
+    mx = coef[1]
+    b = coef[2]
+
+    for idx in range(len(X)):
+
+        val = mx2 * np.power(X[idx],2) + mx*np.power(X[idx]) + b
+        Y.append(val)
+
+
+    return Y
+
+
+
+def GRegLinRegression(X, Y, datatoremove):
+
+    for item in range(len(datatoremove)):
+        del X[item]
+        del Y[item]
+
+
+    Xsum = sum(X)
+    Ysum = sum(Y)
+
+    XY = [a*b for a,b in zip(X, Y)]
+
+    XX = [a*b for a,b in zip(X, X)]
+
+    XXsum = sum(XX)
+
+    XYsum = sum(XY)
+
+    N = len(X)
+
+    A = [[N, Xsum],
+         [Xsum, XXsum]]
+
+    y = [[Ysum],
+         [XYsum]]
+
+    Anp = np.array([A])
+
+    Anpinv = np.linalg.inv(Anp)
+
+    Ynp = np.array([y])
+
+    W = np.dot(Anpinv, Ynp)
+
+    b = W[0][0][0][0]
+    m = W[0][1][0][0]
+
+    print('b: ')
+    print(b)
+    print('m: ')
+    print(m)
+
+    Yg = []
+
+    for idx in range(len(X)):
+        val = m*X[idx] + b
+        Yg.append(val)
+
+
+
+    return m, b, X, Y, Yg
+
+# TODO fix this so it calls the method above and remove m, and b from argument list
+def LinRegReplacer(m,b,X, Y, missindatapoints):
+
+    for idx in missindatapoints:
+
+        x = X[idx]
+
+        Y[idx] = x*m + b
+
+        print(Y[idx])
+
+    return Y
+
+def MakeXYarrays(data, Ystart, Xstart, Xstop):
+
+    Y = []
+    X = []
+
+    for row in data:
+        list0 = row
+        Y.append(list0[Ystart])
+        X.append(list0[Xstart:Xstop])
+
+    return X, Y
+
