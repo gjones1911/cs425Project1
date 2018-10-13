@@ -6,7 +6,7 @@ x = [2, 3, 4, 10, 5]
 y = [2, 1, 3, 5, 8]
 
 
-
+''' the below plays around with taking chunks of a matrix
 xy = [a*b for a, b in zip(x, y)]
 
 alllist = [[x],
@@ -32,3 +32,19 @@ print(list1)
 print(list2)
 print(prt)
 print(y)
+'''
+
+Xsame = x
+
+Xcopy = x.copy()
+
+Xlist = list(x)
+
+del x[1]
+
+print('x')
+print(x)
+print('Xcopy')
+print(Xcopy)
+print('Xlist')
+print(Xlist)

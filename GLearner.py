@@ -9,29 +9,31 @@ dataarray = DC.DataCleaner("CarData.txt")
 # Find the bad data and store it in a map keyed on the column
 # where the bad data was found and with the rows in that column
 # where the bad data is as the vals as a list
-baddatdic = GDW.FindColBadData(dataarray)
+baddatdic = GDW.FindColBadData(dataarray, '?')
 
-print(baddatdic)
+#print(baddatdic)
 
 # TODO: create a function to use linear regression to replace bad data
 
 
 # adjust the data by replacing bad data with some value say a string version of 0
-adjusteddata = GDW.ReplaceBadData(dataarray, baddatdic, str(0))
+adjusteddata = list(GDW.ReplaceBadData(dataarray, baddatdic, str(0)))
 
 
 
 # adjust the data by making part of it numerical(floats) and giving it a column to
 # stop the operation
-adjusteddatafloat = GDW.MakeDataFloats(adjusteddata, 8)
+adjusteddatafloat = list(GDW.MakeDataFloats(adjusteddata, 8))
 
 
-# function to use averageing to replace bad data
-avgdata = GDW.AverageReplacer(adjusteddatafloat, baddatdic, 0.0)
+# function to use averaging to replace bad data
+avgdata = list(GDW.AverageReplacer(adjusteddatafloat.copy(), baddatdic, 0.0))
+
+
 print('avgdata[32]')
 print(avgdata[32])
 # get all the mpg data as a list
-mpgvals, baddatampg = DC.GetCol(avgdata, 0)
+mpgvals, baddatampg = DC.GetCol(avgdata.copy(), 0)
 npmpgvals = np.array([mpgvals])
 npmpgvalsmean = np.mean(npmpgvals)
 

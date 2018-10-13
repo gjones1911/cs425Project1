@@ -5,7 +5,7 @@ from scipy.interpolate import *
 
 #will split the data into 3 vectors
 #sample, verify, test
-def DataSpliter(data, splitVal, type ):
+def DataSpliter(data, splitVal, type):
 
     test = []
     verify = []
@@ -37,7 +37,6 @@ def DataSpliter(data, splitVal, type ):
 
         test.append(list)
 
-
     for idx in range(splitcount, splitcount*2):
 
         list = []
@@ -63,7 +62,6 @@ def DataSpliter(data, splitVal, type ):
     return test, verify, validate, Ytest, Yver, Yvali
 
 
-
 def SplitData(data, split):
 
     test = []
@@ -80,7 +78,8 @@ def GetPart(vector, exclude):
         if i != exclude:
             retvect.append(vector[i])
 
-    return  retvect
+    return retvect
+
 
 def GetColumn(array2d, col):
 
@@ -120,7 +119,6 @@ def GetGrouping2Dremove(list, rs, re, cs, ce, rmv):
     return retlist
 
 
-
 def GetGrouping2D(list, rs, re, cs, ce):
 
     retlist = []
@@ -133,9 +131,29 @@ def GetGrouping2D(list, rs, re, cs, ce):
     return retlist
 
 
+def data_splitter(xdata, ydata, splitval):
+
+    training_data = []
+    validation_data = []
+
+    y_training = []
+    y_validation = []
+
+    # grab training data set
+    for idx in range(0, splitval):
+        training_data.append(xdata[idx])
+        y_training.append(ydata[idx])
+
+    # grab validation data set
+    for idx in range(splitval, len(xdata)):
+        validation_data.append(xdata[idx])
+        y_validation.append(ydata[idx])
+
+    return training_data, validation_data, y_training, y_validation
+
+
 
 def GDataSpliter(data, splitVal, inc):
-
     test = []
     verify = []
     validate = []
@@ -217,9 +235,9 @@ def GrabData(data, startrow, stoprow, startcol, stopcol):
     return retdata
 
 
-#will make an array containing averages of each
-#column of data as an entry. Should be given a fixed
-#data set
+
+# will make an array containing averages of each
+# column of data as an entry. Should be given a fixed data set
 def GmakeMeanArray(data):
 
     meanArray = []
@@ -280,11 +298,11 @@ def CalculateMSE(Gmodel, Rvalidate):
     bottom = 0
     top = 0
 
-    for idx in range(Gmodel.size):
+    for idx in range(len(Gmodel)):
         top += np.power((Rvalidate[idx] - Gmodel[idx]), 2)
 
 
-    for idx in range(Rvalidate.size):
+    for idx in range(len(Rvalidate)):
         bottom += np.power((Rvalidate[idx] - Rmean), 2)
 
     TpDivBtm = top/bottom
@@ -369,11 +387,11 @@ def GTrainer(DataArray):
 
     return RSE, bestinc, bestTestSize
 
+
 def FindBadDataPoints(data, sig):
 
     badDataDic = {}
     collist = []
-
 
     r = 0
 
@@ -394,6 +412,7 @@ def FindBadDataPoints(data, sig):
         r += 1
     return badDataDic, collist
 
+
 def GetBadColumns(dic):
 
     retdic = {}
@@ -410,7 +429,7 @@ def GetBadColumns(dic):
     return retdic
 
 
-def FixBadDataMLR(data ):
+def FixBadDataMLR(data):
 
     fixedMLR = []
 
@@ -434,18 +453,19 @@ def FixBadDataMLR(data ):
     return fixedMLR
 
 
-#finds bad data points and returns a map
-#keyed on the column and with a value of a list of the
-#rows where the bad data is located
-def FindColBadData(dataarray):
+# finds bad data points and returns a map
+# keyed on the column and with a value of a list of the
+# rows where the bad data is located
+def FindColBadData(dataarray, badsig):
 
     retdic = {}
+
 
     for col in range(len(dataarray[0])):
 
             for row in range(len(dataarray)):
 
-                if dataarray[row][col] == '?':
+                if dataarray[row][col] == badsig:
 
                     if col in retdic:
                         retdic[col].append(row)
@@ -455,21 +475,36 @@ def FindColBadData(dataarray):
 
     return retdic
 
-#makes the data from col 0 to stop float values
+# makes the data from col 0 to stop float values
 def MakeDataFloats(data, stop):
-    for row in range(len(data)):
+
+    array = list(data)
+
+    for row in range(len(array)):
         for col in range(0, stop):
-            data[row][col] = float(data[row][col])
+            array[row][col] = float(array[row][col])
 
-    return data.copy()
+    return array
 
-#replaces bad data with the given value
+
+# replaces bad data with the given value
 def ReplaceBadData(data, baddic, val):
     for entry in baddic:
         badlist = baddic[entry]
         for idx in range(len(badlist)):
             row = badlist[idx]
             data[row][entry] = val
+
+    return data.copy()
+
+
+# replaces bad data with the given value
+def ReplaceBadDatavec(data, baddic, vec):
+    for entry in baddic:
+        badlist = baddic[entry]
+        for idx in range(len(badlist)):
+            row = badlist[idx]
+            data[row][entry] = float(vec[idx])
 
     return data.copy()
 
@@ -488,24 +523,26 @@ def BadDataAverager(data, col, sigval):
 
     return colsum/count
 
+
 def AverageReplacer(data, baddic, sigval):
 
     for entry in baddic:
         avg = BadDataAverager(data, entry, sigval)
 
 
-        print('avg:')
-        print(avg)
-        print('entry')
-        print(entry)
+        #print('avg:')
+        #print(avg)
+        #print('entry')
+        #print(entry)
         badlist = baddic[entry]
 
         for row in badlist:
-            print('adding avg: ' + str(avg) + 'to row '+str(row) + ' and col '+ str(entry) )
+            #print('adding avg: ' + str(avg) + 'to row '+str(row) + ' and col '+ str(entry) )
 
             data[row][entry] = avg
 
     return data.copy()
+
 
 def LinearReplacer(data, m, b, Xcol, Ycol, baddataPoints):
 
@@ -517,6 +554,7 @@ def LinearReplacer(data, m, b, Xcol, Ycol, baddataPoints):
         data[row][Ycol] = m*x + b
 
     return data.copy()
+
 
 def LinearReggressor(independent, dependent, datatoremove):
 
@@ -532,6 +570,7 @@ def LinearReggressor(independent, dependent, datatoremove):
 
     coeff = np.polyfit(independent, dependent, 1)
     return coeff, dependent, independent
+
 
 def P2Reggressor(independent, dependent, datatoremove):
 
@@ -549,6 +588,7 @@ def P2Reggressor(independent, dependent, datatoremove):
     return coeff, dependent, independent
 
 
+# non mulitvariate
 def GetYvals(coef, X):
 
     Y = []
@@ -563,6 +603,7 @@ def GetYvals(coef, X):
 
 
     return Y
+
 
 def GetYvalsP2(coef, X):
 
@@ -579,7 +620,6 @@ def GetYvalsP2(coef, X):
 
 
     return Y
-
 
 
 def GRegLinRegression(X, Y, datatoremove):
@@ -630,9 +670,8 @@ def GRegLinRegression(X, Y, datatoremove):
         val = m*X[idx] + b
         Yg.append(val)
 
-
-
     return m, b, X, Y, Yg
+
 
 # TODO fix this so it calls the method above and remove m, and b from argument list
 def LinRegReplacer(m,b,X, Y, missindatapoints):
@@ -647,6 +686,7 @@ def LinRegReplacer(m,b,X, Y, missindatapoints):
 
     return Y
 
+
 def MakeXYarrays(data, Ystart, Xstart, Xstop):
 
     Y = []
@@ -659,3 +699,248 @@ def MakeXYarrays(data, Ystart, Xstart, Xstop):
 
     return X, Y
 
+
+def IndeDeparrays(darray, Ycol):
+
+    Y = []
+    X = []
+
+    arry = list(darray)
+
+    for row in arry:
+
+        Y.append(row[Ycol])
+
+        #del row[Ycol]
+
+        xc = []
+        xc.append(1)
+
+        for idx in range(len(row)-1):
+            if idx != Ycol:
+                xc.append(row[idx])
+
+        X.append(xc)
+
+    #print(Y)
+    #print(X)
+
+    return Y, X
+
+
+def mulit_linear_regressor(x_data, y_data):
+
+    # dependent array
+    # Xarray = []
+    # independent array
+    # Yarray = []
+    # array to work with in the function
+    #WorkArry = list(Darray)
+    # parameter array
+    # W = []
+    #print("------------------------------------------------------------------------Work array")
+    #print(WorkArry)
+    #Yarray, Xarray = IndeDeparrays(list(WorkArry), YCol)
+    #print("------------------------------------------------------------------------Work array2")
+    #print(WorkArry)
+    #Xarry = MakeDataFloats(Xarray,7)
+
+    X = np.array(x_data, dtype=np.float)
+    Y = np.array(y_data, dtype=np.float)
+
+    Xtranspose = np.transpose(X)
+
+    XTX = np.dot(Xtranspose, X)
+
+    XTXinv = np.linalg.inv(XTX)
+
+    XTXinvXT = np.dot(XTXinv, Xtranspose)
+
+    W = np.dot(XTXinvXT, Y)
+
+    return W
+
+
+def MulitLinearRegressor(Darray, YCol):
+
+    # dependent array
+    # Xarray = []
+
+    # independent array
+    # Yarray = []
+
+    # array to work with in the function
+    WorkArry = list(Darray)
+
+    # parameter array
+    # W = []
+
+    #print("------------------------------------------------------------------------Work array")
+    #print(WorkArry)
+
+    Yarray, Xarray = IndeDeparrays(list(WorkArry), YCol)
+
+    #print("------------------------------------------------------------------------Work array2")
+    #print(WorkArry)
+
+
+    Xarry = MakeDataFloats(Xarray,7)
+
+    X = np.array(Xarry, dtype=np.float)
+    Y = np.array(Yarray, dtype=np.float)
+
+    Xtranspose = np.transpose(X)
+
+    XTX = np.dot(Xtranspose, X)
+
+    XTXinv = np.linalg.inv(XTX)
+
+    XTXinvXT = np.dot(XTXinv, Xtranspose)
+
+    W = np.dot(XTXinvXT, Y)
+
+    return W, Xarray, Yarray
+
+
+def discardbaddata(datalist, badlist):
+
+    count = 0
+
+    workinglist = list(datalist)
+    for col in badlist:
+
+        for entry in badlist[col]:
+            #print('deleting entry ' + str(entry - count))
+            del workinglist[entry - count]
+            count += 1
+
+    return workinglist
+
+
+def samplemeanarray(attribdata):
+
+    end = len(attribdata[0]) - 1
+
+    smu = []
+
+    for col in range(0, end):
+
+        attrib = np.array(GetColumn(attribdata, col), dtype=np.float64)
+
+        smu.append(np.mean(attrib))
+
+    return list(smu)
+
+
+def get_r_data(x_data, w):
+
+    r = []
+
+    wnp = np.array(w, dtype=np.float64)
+
+    for row in range(len(x_data)):
+
+        x_observation = list()
+
+        #x_observation.append(1)
+
+        for col in range(len(x_data[0])):
+
+            x_observation.append(x_data[row][col])
+
+
+        r.append(np.dot(np.array(x_observation, dtype=np.float64), wnp))
+
+    return r
+
+
+def getlinregmissingdata(regdata, baddic, w):
+
+    r = []
+
+    #print('----------------------------------------------------------------regdata')
+    #print(regdata)
+
+    for entry in baddic:
+
+        dlist = baddic[entry]
+
+
+        for row in dlist:
+            #print('------------row')
+            #print(row)
+            x = []
+            x.append(1)
+            for col in range(len(regdata[0])-1):
+                if col != entry:
+                    x.append(regdata[row][col])
+            Xnp = np.array(x, dtype=np.float64)
+            Wnp = np.array(w, dtype=np.float64)
+
+            '''
+            print('length of Wnp')
+            print(Wnp)
+            print('length Xnp')
+            print(Xnp)
+            '''
+            r.append(np.dot(Xnp, Wnp))
+
+    return r
+
+
+def TrainModel(Xdata, Ydata):
+
+    #training_data, validation_data, y_training, y_validation
+
+    print(len(Xdata))
+    split = int(len(Xdata)/16)
+
+    inc = 1
+
+    best_cod = 0
+    bs = 10
+
+    train_set, validation_set, y_training, y_validation = data_splitter(Xdata, Ydata, split)
+
+    while len(validation_set) >= 10:
+
+        print('len(train_set)')
+        print(len(train_set))
+
+        print('length of validation_set')
+        print(len(validation_set))
+
+        print('length of y_training')
+        print(len(y_training))
+
+        print('length of y_validation')
+        print(len(y_validation))
+
+        w_params = mulit_linear_regressor(train_set, y_training)
+
+        # use w to get some response data
+        gmodel = get_r_data(validation_set, w_params)
+
+        cod = CalculateMSE(gmodel, y_validation)
+
+        ans = 1-cod
+
+        if best_cod < cod and cod >  0 and cod <= 1:
+            best_cod = cod
+            bs = split
+
+        split +=  inc
+
+
+        if split > len(Xdata)-20:
+            print('split')
+            print(split)
+            break
+        print('split norm')
+        print(split)
+        train_set, validation_set, y_training, y_validation = data_splitter(Xdata, Ydata, split)
+
+
+
+
+    return best_cod, bs
