@@ -104,3 +104,6 @@ print(best_mse)
 print('best split MSE')
 print(bs)
 print(format("\n"))
+
+
+F = GDW.forward_selector(list(Xx), list(Yy), int(398))

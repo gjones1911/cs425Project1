@@ -882,7 +882,7 @@ def forward_selector(x_data, y_data, split):
     col_size = len(x_data[0])
     used_col = []
 
-    found = False
+    found = True
 
     addcol = [2000]
 
@@ -897,17 +897,16 @@ def forward_selector(x_data, y_data, split):
         F.append(flist)
 
     #while old_error > new_error:
-    while True:
+    while found == True:
+        found = False
         # go through all columns checking for the min mse value ans storeing that x column
         for col in range(col_size):
             Ftmp = list(F)
-            Fsaver.clear()
+            #Fsaver.clear()
             if col not in used_col:
-                tmp_x = []
-                # get a column from x data
-                # x_col = GetColumn(x_data,col)
-
                 # create a temp F array
+                # each row of Ftmp contains a list
+                # adds the current column
                 for row in range(nx):
                     Ftmp[row].append(x_data[row][col])
 
@@ -936,12 +935,16 @@ def forward_selector(x_data, y_data, split):
                 #x_add = GetColumn(x_data, addcol)
         if found != True:
             break
+        else:
+            # add the saved column to F
+            for row in range(nx):
+                F[row].append(x_data[row][addcol[0]])
+                used_col.append(addcol[0])
         #add best column
         #for row in range(nx):
-            flist.append(x_add[row])
+        #flist.append(x_add[row])
 
-
-        for row in range(nx):
-            F[row].append(flist)
+        #for row in range(nx):
+        #    F[row].append(flist)
 
     return F
