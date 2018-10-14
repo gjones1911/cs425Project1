@@ -15,6 +15,7 @@ import DataCleaner as DC
 # get the data using data cleaner
 dataarray = DC.DataCleaner("CarData.txt")
 
+error_array = ['COD', 'Least_squares', 'MSE']
 
 #print('data0')
 #print(dataarray[32])
@@ -80,11 +81,26 @@ print(len(Yy))
 print(1)
 print(Yy)
 
-best_cod, bs = GDW.TrainModel(Xx, Yy)
-
-print('best_cod')
+# Coefficient of Determination :
+best_cod, bs = GDW.TrainModelCOD(Xx, Yy)
+print('best_cod Cod')
 print(best_cod)
-
-print('best split')
+print('best split Cod')
 print(bs)
+print(format("\n"))
 
+# Lest Squares Error :
+best_ls, bs = GDW.TrainModelLSE(Xx, Yy)
+print('best Least Squares error')
+print(best_ls)
+print('best split Least Squares error')
+print(bs)
+print(format("\n"))
+
+# Meas Square Error :
+best_mse, bs = GDW.TrainModelMSE(Xx, Yy)
+print('best MSE')
+print(best_mse)
+print('best split MSE')
+print(bs)
+print(format("\n"))

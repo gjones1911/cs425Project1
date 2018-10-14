@@ -15,9 +15,8 @@ import DataCleaner as DC
 # get the data using data cleaner
 dataarray = DC.DataCleaner("CarData.txt")
 
+error_array = ['COD', 'Least_squares', 'MSE']
 
-#print('data0')
-#print(dataarray[32])
 # Find the bad data and store it in a map keyed on the column
 # where the bad data was found and with the rows in that column
 # where the bad data is as the vals as a list
@@ -80,10 +79,23 @@ print(len(Yy))
 print(1)
 print(Yy)
 
-best_cod, bs = GDW.TrainModel(Xx, Yy)
-
-print('best_cod')
+# Coefficient of Determination :
+best_cod, bs = GDW.TrainModel(Xx, Yy, error_array[0])
+print('best_cod Cod')
 print(best_cod)
+print('best split Cod')
+print(bs)
 
-print('best split')
+# Lest Squares Error :
+best_ls, bs = GDW.TrainModel(Xx, Yy, error_array[1])
+print('best Least Squares erro')
+print(best_ls)
+print('best split Least Squares error')
+print(bs)
+
+# Meas Square Error :
+best_mse, bs = GDW.TrainModel(Xx, Yy, error_array[2])
+print('best MSE')
+print(best_mse)
+print('best split MSE')
 print(bs)
