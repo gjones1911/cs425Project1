@@ -79,22 +79,31 @@ print(1)
 print(Yy)
 
 # Coefficient of Determination :
-best_cod, bs = GDW.TrainModel(Xx, Yy, error_array[0])
+best_cod, bs = GDW.TrainModelCOD(Xx, Yy)
 print('best_cod Cod')
 print(best_cod)
 print('best split Cod')
 print(bs)
 
 # Lest Squares Error :
-best_ls, bs = GDW.TrainModel(Xx, Yy, error_array[1])
+best_ls, bs = GDW.TrainModelLSE(Xx, Yy)
 print('best Least Squares erro')
 print(best_ls)
 print('best split Least Squares error')
 print(bs)
 
 # Meas Square Error :
-best_mse, bs = GDW.TrainModel(Xx, Yy, error_array[2])
+best_mse, bs = GDW.TrainModelMSE(Xx, Yy)
 print('best MSE')
 print(best_mse)
 print('best split MSE')
 print(bs)
+
+split = bs
+
+F, best_mse = GDW.forward_selector(Xx, Yy, split)
+
+print('best MSR is ')
+print(best_mse)
+print('F')
+print(F)

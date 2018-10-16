@@ -1,7 +1,12 @@
 import numpy as np
+import pandas as pd
 from scipy.interpolate import *
 #from DataCleaner import *
 
+tester = [[1, 2, 3, 4, 9],
+          [5, 6, 7, 8, 10]]
+
+ycolumn = 2
 
 #will split the data into 3 vectors
 #sample, verify, test
@@ -53,12 +58,25 @@ def GetPart(vector, exclude):
             retvect.append(vector[i])
     return retvect
 
+
 # returns a given column
 def GetColumn(array2d, col):
     retlist = []
     for entry in array2d:
         item = entry[col]
         retlist.append(item)
+    return retlist
+
+
+def column_getter(array,col):
+
+    Y2d = [array[i][col:col+1] for i in range(0, len(array))]
+
+    retlist = []
+
+    for row in Y2d:
+        retlist.append(row[0])
+
     return retlist
 
 
@@ -98,11 +116,11 @@ def data_splitter(xdata, ydata, splitval):
     y_training = []
     y_validation = []
     # grab training data set
-    for idx in range(0, splitval):
+    for idx in range(0, int(splitval)):
         training_data.append(xdata[idx])
         y_training.append(ydata[idx])
     # grab validation data set
-    for idx in range(splitval, len(xdata)):
+    for idx in range(int(splitval), len(xdata)):
         validation_data.append(xdata[idx])
         y_validation.append(ydata[idx])
     return training_data, validation_data, y_training, y_validation
@@ -172,6 +190,8 @@ def GrabData(data, startrow, stoprow, startcol, stopcol):
     return retdata
 
 
+
+
 # will make an array containing averages of each
 # column of data as an entry. Should be given a fixed data set
 def GmakeMeanArray(data):
@@ -224,6 +244,7 @@ def CalculateMSE(Gmodel, Rvalidate):
         bottom += np.power((Rvalidate[idx] - Rmean), 2)
     TpDivBtm = top/bottom
     return 1 - TpDivBtm
+
 
 
 # can be used to train a data set and
@@ -311,6 +332,7 @@ def GetBadColumns(dic):
             retdic[col].append(item)
         #print(dic[item])
     return retdic
+
 
 # TODO probably need to remove this
 def FixBadDataMLR(data):
@@ -401,6 +423,7 @@ def LinearReplacer(data, m, b, Xcol, Ycol, baddataPoints):
 
 
 # performs a lindear regresion
+# uses numpy
 def LinearReggressor(independent, dependent, datatoremove):
     for item in range(len(datatoremove)):
         del independent[item]
@@ -458,7 +481,6 @@ def GRegLinRegression(X, Y, datatoremove):
     for item in range(len(datatoremove)):
         del X[item]
         del Y[item]
-
 
     Xsum = sum(X)
     Ysum = sum(Y)
@@ -532,6 +554,25 @@ def MakeXYarrays(data, Ystart, Xstart, Xstop):
 
     return X, Y
 
+def x_y_getter(array, Ycol):
+    Y = column_getter(array, Ycol)
+
+    front = [array[i][0:Ycol] for i in range(0, len(array))]
+    back = [array[i][Ycol + 1:] for i in range(0, len(array))]
+
+    #chunk1 = front[0] + endr[0]
+    #chunk2 = hlf1[1] + endr[1]
+    #chunk = [chunk1] + [chunk2]
+
+    X = [front[0] + back[0]]
+
+    for idx in range(1,len(array)):
+        X += [front[idx] + back[idx]]
+
+    return X, Y
+
+
+
 # returns an independent array made of the data minus Ycol and a dependent vector that comes from the column
 # Ycol out of the darray
 def IndeDeparrays(darray, Ycol):
@@ -557,6 +598,7 @@ def IndeDeparrays(darray, Ycol):
         X.append(xc)
 
     return Y, X
+
 
 # performs multiple linear regrsion on the x and y data
 # and returns the generated parameter vector W
@@ -633,14 +675,122 @@ def discardbaddata(datalist, badlist):
 
     return workinglist
 
+def quartiles_array(data):
 
+    q_array = []
+
+    for col in range(data[0]-1):
+        attrib = GetColumn(data, col)
+
+        lq, uq, md, medn = quartiles(attrib)
+        qlist = [lq, uq, md, medn]
+
+        q_array.append(qlist)
+    return q_array
+
+
+
+def quartiles(attrib_data):
+    sortedPoints = sorted(attrib_data)
+    # 2. divide the data set in two halves
+    mid = len(sortedPoints) / 2
+
+    a_median = np.median(attrib_data)
+
+    if (len(sortedPoints) % 2 == 0):
+        # even
+        lowerQ = np.median(sortedPoints[:mid])
+        upperQ = np.median(sortedPoints[mid:])
+    else:
+        # odd
+        lowerQ = np.median(sortedPoints[:mid])  # same as even
+        upperQ = np.median(sortedPoints[mid + 1:])
+
+    return lowerQ, upperQ, mid, a_median
+
+
+def min_max_array(attrib_data):
+    min_array = []
+    max_array = []
+
+    for col in range(len(attrib_data)-1):
+        attrib = np.array(GetColumn(attrib_data, col), dtype=np.float)
+
+        min_array.append(np.amin(attrib))
+        max_array.append(np.amax(attrib))
+
+    return min_array, max_array
+
+
+def z_noramization(attrib_data, mean_array, std_array):
+    col_end = len(attrib_data[0]) - 1
+    z_norm_vals = []
+
+    for col in range(0, col_end):
+        attrib = np.array(GetColumn(attrib_data, col), dtype=np.float)
+        sum = 0
+        for row in range(len(attrib)):
+            sum += (attrib[row] - mean_array[col])
+        if std_array[col] == 0:
+            z_norm_vals.append(sum/1)
+        else:
+            z_norm_vals.append(sum/std_array[col])
+
+    return list(z_norm_vals)
+
+
+def sample_mean_array(array, con_dis):
+    smu = []
+
+    limit = len(array[0])
+
+    for col in range(0, limit):
+        if con_dis[col] == 0:
+            smu.append(np.mean( np.array(column_getter(array, col), dtype=np.float)) )
+        else:
+            smu.append(int(np.mean( np.array(column_getter(array, col), dtype=np.int))) )
+
+    return smu
+
+
+#calculates the sample mean for every column in attribdata
 def samplemeanarray(attribdata):
     end = len(attribdata[0]) - 1
     smu = []
+    discrete_vals = [1,6,7, 8]
     for col in range(0, end):
         attrib = np.array(GetColumn(attribdata, col), dtype=np.float64)
-        smu.append(np.mean(attrib))
+        if col in discrete_vals:
+            smu.append(int(np.mean(attrib)))
+        else:
+            smu.append(float(np.mean(attrib)))
     return list(smu)
+
+def sample_std_array(attribdata):
+    end = len(attribdata[0]) - 1
+    ssig2 = []
+    discrete_vals = [1,6,7]
+    for col in range(0, end):
+        if col in discrete_vals:
+            attrib = np.array(GetColumn(attribdata, col), dtype=np.int)
+            ssig2.append(int(np.std(attrib, dtype=np.int)))
+        else:
+            attrib = np.array(GetColumn(attribdata, col), dtype=np.float)
+            ssig2.append((np.std(attrib, dtype=np.float)))
+    return list(ssig2)
+
+def sample_std_array2(attribdata):
+    end = len(attribdata[0])
+    ssig2 = []
+    discrete_vals = [1, 6, 7, 8]
+    for col in range(0, end):
+        if col in discrete_vals:
+            attrib = np.array(column_getter(attribdata, col), dtype=np.int)
+            ssig2.append(int(np.std(attrib, dtype=np.int)))
+        else:
+            attrib = np.array(column_getter(attribdata, col), dtype=np.float)
+            ssig2.append((np.std(attrib, dtype=np.float)))
+    return list(ssig2)
 
 
 def get_r_data(x_data, w):
@@ -657,8 +807,10 @@ def get_r_data(x_data, w):
 
 def getlinregmissingdata(regdata, baddic, w):
     r = []
+
     #print('----------------------------------------------------------------regdata')
     #print(regdata)
+
     for entry in baddic:
         dlist = baddic[entry]
         for row in dlist:
@@ -679,6 +831,106 @@ def getlinregmissingdata(regdata, baddic, w):
             '''
             r.append(np.dot(Xnp, Wnp))
     return r
+
+def linear_calculation_for_w(x, y):
+    Xsum = sum(x)
+    Ysum = sum(y)
+
+    XY = [a * b for a, b in zip(x, y)]
+
+    XX = [a * b for a, b in zip(x, x)]
+
+    XXsum = sum(XX)
+
+    XYsum = sum(XY)
+
+    N = len(x)
+
+    A = [[N, Xsum],
+         [Xsum, XXsum]]
+
+    y = [Ysum,
+         XYsum]
+
+    Anp = np.array(A)
+
+    Anpinv = np.linalg.inv(Anp)
+
+    Ynp = np.array(y)
+
+    W = np.dot(Anpinv, Ynp)
+
+    return W
+
+
+# uses linear regression to generate a slpme(m) and intercept(b) value
+# for a line approximating the data
+def reg_lin_regression(X, Y):
+
+    #training_data, validation_data, y_training, y_validation
+
+    train, validation, y_train, y_validation = data_splitter(X, Y, int(len(X)/16))
+
+
+    W = linear_calculation_for_w(train, y_train)
+
+    #b = W[0][0][0][0]
+    #m = W[0][1][0][0]
+
+    b = W[0]
+    m = W[1]
+
+
+    print('b: ')
+    print(b)
+    print('m: ')
+    print(m)
+
+    Yg = []
+
+    for idx in range(len(validation)):
+        val = m*validation[idx] + b
+        Yg.append(val)
+
+    #mse = mean_square_error(Yg, y_validation)
+
+    return m, b, X, Y, Yg
+
+
+# uses linear regression to generate a slpme(m) and intercept(b) value
+# for a line approximating the data
+#def reg_lin_regression_MSR(X, Y):
+def reg_lin_regression_MSR(X, Y, split):
+
+    #training_data, validation_data, y_training, y_validation
+
+    train, validation, y_train, y_validation = data_splitter(X, Y, split)
+    #train, validation, y_train, y_validation = data_splitter(X, Y, int(len(X)/16))
+
+
+    W = linear_calculation_for_w(train, y_train)
+
+    #b = W[0][0][0][0]
+    #m = W[0][1][0][0]
+
+    b = W[0]
+    m = W[1]
+
+
+    #print('b: ')
+    #print(b)
+    #print('m: ')
+    #print(m)
+
+    Yg = []
+
+    for idx in range(len(validation)):
+        val = m*validation[idx] + b
+        Yg.append(val)
+
+    mse = mean_square_error(Yg, y_validation)
+
+    return m, b, X, Y, Yg, mse
 
 
 
@@ -777,6 +1029,7 @@ def TrainModelLSE(Xdata, Ydata):
 
     return best_ls, bs
 
+
 # used to attain the best test size with the hightest coefficient of determination
 def TrainModelMSE(Xdata, Ydata):
     #training_data, validation_data, y_training, y_validation
@@ -827,7 +1080,7 @@ def TrainModelMSE(Xdata, Ydata):
     return best_mse, bs
 
 
-#calculates the mean square error
+# calculates the mean square error
 def mean_square_error(darray, yarray):
     N = len(darray)
 
@@ -843,6 +1096,7 @@ def mean_square_error(darray, yarray):
     return np.mean(np.array(diffList, dtype=np.float64))
 
 
+# calculates the least squares estimate
 def least_squares_estimate(darray, yarray):
     N = len(darray)
 
@@ -863,21 +1117,55 @@ def least_squares_estimate(darray, yarray):
     #return np.mean(np.array(diffList, dtype=np.float64))
 
 
-
-def add_x_to_f(x_data, col, tmp_x, used_x):
+#will use linear regression to find the first attribute
+#to add to the F array for forward selection
+#will split the data into training and validation sets
+#according to split parameter
+def find_first(x_data, y_data, split):
 
     col_size = len(x_data[0])
-    row_size = len(x_data)
 
-    return
+    min_mse = [10000]
+    min_col = [10000]
+    best_col = []
+
+    for col in range(1,col_size):
+        x_column = list(GetColumn(x_data, col))
+
+        #print('x_column')
+        #print(x_column)
+        #print('col')
+        #print(col)
+
+        #training_data, validation_data, y_training, y_validation = data_splitter(x_column, y_data, len(x_column)/16)
+
+        m, b, X, Y, Yg, mse = reg_lin_regression_MSR(x_column, y_data, split)
+
+        #print(format("\n"))
+        #print('-------------------------mse')
+        #print(mse)
+        #print(format("\n"))
+        #coef = [m,b]
+
+        #y_result = GetYvals(coef, validation_data)
+        #y_result = GetY
+
+        if mse < min_mse[0]:
+            min_col[0] = col
+            min_mse[0] = mse
+            best_col.clear()
+            best_col.append(list(x_column))
+
+    return list(min_col), list(min_mse), list(best_col)
 
 
-
-
-
+# attempts to do forward selection
 def forward_selector(x_data, y_data, split):
 
     nx = len(x_data)
+    #print('X data is ')
+    #print(x_data)
+    #print(len(x_data))
     ny = len(y_data)
     col_size = len(x_data[0])
     used_col = []
@@ -891,24 +1179,65 @@ def forward_selector(x_data, y_data, split):
     F = list()
     Fsaver = list()
 
+    # find the first variable  array to add to F as well its mean square error
+    min_col, min_mse, best_col = find_first(x_data, y_data, split)
+
+    print('min_col')
+    print(min_col)
+    print(format("\n"))
+
+    print('min_mse')
+    print(min_mse)
+    print(format("\n"))
+
+    print('best_col')
+    print(best_col[0])
+    print(len(best_col[0]))
+    print(format("\n"))
+
+    mininmum_mse[0] = min_mse
+
+    #used to ignore column 1
+    used_col.append(0)
+    used_col.append(min_col[0])
+    mininmum_mse[0] = min_mse[0]
+
+
     # set up F array
     for row in range(nx):
-        flist = [1]
+        flist = [1.0]
         F.append(flist)
 
+    for row in range(nx):
+        F[row].append(best_col[0][row])
+
+    #print('in side funct F')
+    #print(F)
+
     #while old_error > new_error:
-    while found == True:
+    while found:
         found = False
         # go through all columns checking for the min mse value ans storeing that x column
-        for col in range(col_size):
-            Ftmp = list(F)
-            #Fsaver.clear()
+     #   print(format("\n"))
+      #  print('--------------------------------------------------------------------Starting for loop ')
+      #  print('Length of F', len(F[0]))
+      #  print(format("\n"))
+      #  print(format("\n"))
+        for col in range(1,col_size):
             if col not in used_col:
+       #         print('col')
+        #        print(col)
+                Ftmp = F[:]
+                #Fsaver.count()
+
                 # create a temp F array
                 # each row of Ftmp contains a list
                 # adds the current column
                 for row in range(nx):
                     Ftmp[row].append(x_data[row][col])
+
+         #       print('in for Ftmp')
+          #      print(Ftmp)
 
                 # split the data into training and validation sets
                 train_set, validation_set, y_training, y_validation = data_splitter(Ftmp, y_data, split)
@@ -921,25 +1250,45 @@ def forward_selector(x_data, y_data, split):
 
                 #calculate the mean square error for this x column
                 mse = mean_square_error(gmodel, y_validation)
+                for row in range(nx):
+                    Ftmp[row].pop()
+           #     print('Ftmp is now')
+            #    print(Ftmp)
+             #   print(format("\n"))
+             #   print('new mse')
+             #   print(mse)
 
                 if mse < mininmum_mse[0]:
+              #      print('found new min mse as '+ str(mse) + ' at col ' + str(col))
                     mininmum_mse[0] = mse
                     addcol[0] = col
                     found = True
-                    Fsaver = list(Ftmp)
-
+                    #Fsaver = list(Ftmp)
+                del Ftmp[col]
+               # print('Ftmp is now')
+               # print(Ftmp)
                 #if col not in used_col:
                 #   used_col.append(col)
-
+            #else:
+                #print('column ' + str(col) + ' is alread used')
 
                 #x_add = GetColumn(x_data, addcol)
-        if found != True:
+        #print(format("\n"))
+        #print(format("\n"))
+        #print('The for loop ended')
+        #print(format("\n"))
+        #print(format("\n"))
+        if not found:
+         #   print('no better mse was found')
             break
         else:
             # add the saved column to F
+          #  print("found a new variable to add: " + str(addcol[0]))
             for row in range(nx):
                 F[row].append(x_data[row][addcol[0]])
-                used_col.append(addcol[0])
+            used_col.append(addcol[0])
+            if len(F) == col_size + 1:
+                break
         #add best column
         #for row in range(nx):
         #flist.append(x_add[row])
@@ -947,4 +1296,32 @@ def forward_selector(x_data, y_data, split):
         #for row in range(nx):
         #    F[row].append(flist)
 
-    return F
+    return F, mininmum_mse[0]
+
+
+# returns an array of names
+def get_car_types(data_array):
+    col_size = len(data_array[0]) - 1
+    car_names = []
+    for row in data_array:
+        name = row[col_size].strip(' ').strip('\"')
+        car_names.append(name)
+    return car_names
+
+
+# converts an array of names to an array of numbers
+# representing the names
+def convert_nominal_to_int(name_array):
+    ret_dic = {}
+    ret_array = []
+    count = 1
+    for name in name_array:
+        if name not in ret_dic:
+            ret_dic[name] = count
+            count += 1
+    for name in name_array:
+        ret_array.append(ret_dic[name])
+
+    return ret_dic, ret_array
+
+

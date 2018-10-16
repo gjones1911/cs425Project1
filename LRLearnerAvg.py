@@ -61,9 +61,12 @@ npmpgvalsmean = np.mean(npmpgvals)
 #print(npmpgvalsmean)
 
 smu = GDW.samplemeanarray(avgdata.copy())
-
 print('smu')
 print(smu)
+
+sstd2 = GDW.sample_std_array(avgdata.copy())
+print('sample std ')
+print(sstd2)
 
 W, Xx, Yy = GDW.MulitLinearRegressor(avgdata, 0)
 
@@ -104,6 +107,45 @@ print(best_mse)
 print('best split MSE')
 print(bs)
 print(format("\n"))
+split = bs
+
+#F = GDW.forward_selector(list(Xx), list(Yy), int(398/2))
+
+#x_col = GDW.GetColumn(avgdata, 1)
+
+#print('x_col')
+#print(len(x_col))
+#print(x_col)
+'''
+min_col, min_mse, best_col = GDW.find_first(Xx, Yy)
 
 
-F = GDW.forward_selector(list(Xx), list(Yy), int(398))
+print('min_col')
+print(min_col)
+print(format("\n"))
+
+print('min_mse')
+print(min_mse)
+print(format("\n"))
+
+print('best_col')
+print(best_col[0])
+print(len(best_col[0]))
+print(format("\n"))
+
+#m_1, b_1, X_1, Y_1, Yg_1 = GDW.reg_lin_regression(list(x_col), list(Yy))
+
+print('m_1')
+print(m_1)
+
+print('b_1')
+print(b_1)
+'''
+
+F, best_mse = GDW.forward_selector(Xx, Yy, split)
+
+print('best MSR is ')
+print(best_mse)
+print('F')
+print(F)
+
