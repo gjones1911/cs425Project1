@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from numpy.core.multiarray import ndarray
 from scipy.interpolate import *
 #from DataCleaner import *
 
@@ -7,6 +8,18 @@ tester = [[1, 2, 3, 4, 9],
           [5, 6, 7, 8, 10]]
 
 ycolumn = 2
+
+a_data = []
+
+def set_adata(arraydata):
+    a_data = list(arraydata)
+    return
+
+def tre_splitter(x_data, y_data, split_array):
+    return
+
+
+
 
 #will split the data into 3 vectors
 #sample, verify, test
@@ -71,6 +84,11 @@ def GetColumn(array2d, col):
 def column_getter(array,col):
 
     Y2d = [array[i][col:col+1] for i in range(0, len(array))]
+
+    #print(format('\n'))
+    #print('Y2d')
+    #print(Y2d)
+    #print(format('\n'))
 
     retlist = []
 
@@ -708,6 +726,27 @@ def quartiles(attrib_data):
 
     return lowerQ, upperQ, mid, a_median
 
+def max_min_array_getter(attrib_data):
+    min_array = []
+    max_array = []
+
+    #print(format('\n'))
+    #print('len attrib data')
+    #print(len(attrib_data))
+    #print(format('\n'))
+
+    for col in range(len(attrib_data[0])):
+        #print(format('\n'))
+        #print("col")
+        #print(col)
+        #print(format('\n'))
+        attrib = np.array(column_getter(attrib_data, col), dtype=np.float)
+
+        min_array.append(np.amin(attrib))
+        max_array.append(np.amax(attrib))
+
+    return min_array, max_array
+
 
 def min_max_array(attrib_data):
     min_array = []
@@ -723,18 +762,33 @@ def min_max_array(attrib_data):
 
 
 def z_noramization(attrib_data, mean_array, std_array):
-    col_end = len(attrib_data[0]) - 1
-    z_norm_vals = []
+    col_end = len(attrib_data[0])
+    z_norm_vals = list(attrib_data)
+    tmp_list = []
+
 
     for col in range(0, col_end):
-        attrib = np.array(GetColumn(attrib_data, col), dtype=np.float)
+        #attrib = np.array(GetColumn(attrib_data, col), dtype=np.float)
+        attrib = np.array(column_getter(attrib_data, col), dtype=np.float)
+
+        print('attrib for column: ' + str(col))
+        print(attrib)
+        tmp_list.clear()
         sum = 0
         for row in range(len(attrib)):
-            sum += (attrib[row] - mean_array[col])
-        if std_array[col] == 0:
-            z_norm_vals.append(sum/1)
-        else:
-            z_norm_vals.append(sum/std_array[col])
+            dif = (attrib[row] - mean_array[col])
+            print('dif at row: ' + str(row))
+            print(dif)
+            print('mean at col: ' + str(col) +  ' is ')
+            print(mean_array[col])
+            if std_array[col] == 0:
+                tmp_list.append(dif/mean_array[col])
+            else:
+                tmp_list.append(dif/std_array[col])
+
+        for row in range(len(z_norm_vals)):
+            z_norm_vals[row][col] = tmp_list[row]
+
 
     return list(z_norm_vals)
 
@@ -744,11 +798,12 @@ def sample_mean_array(array, con_dis):
 
     limit = len(array[0])
 
+
     for col in range(0, limit):
         if con_dis[col] == 0:
-            smu.append(np.mean( np.array(column_getter(array, col), dtype=np.float)) )
-        else:
-            smu.append(int(np.mean( np.array(column_getter(array, col), dtype=np.int))) )
+            smu.append(np.mean(np.array(column_getter(array, col), dtype=np.float), dtype=float))
+        elif con_dis[col] == 1:
+            smu.append(np.mean(np.array(column_getter(array, col), dtype=np.int), dtype=np.int))
 
     return smu
 
@@ -757,7 +812,7 @@ def sample_mean_array(array, con_dis):
 def samplemeanarray(attribdata):
     end = len(attribdata[0]) - 1
     smu = []
-    discrete_vals = [1,6,7, 8]
+    discrete_vals = [1,6,7]
     for col in range(0, end):
         attrib = np.array(GetColumn(attribdata, col), dtype=np.float64)
         if col in discrete_vals:
@@ -765,6 +820,7 @@ def samplemeanarray(attribdata):
         else:
             smu.append(float(np.mean(attrib)))
     return list(smu)
+
 
 def sample_std_array(attribdata):
     end = len(attribdata[0]) - 1
@@ -779,10 +835,11 @@ def sample_std_array(attribdata):
             ssig2.append((np.std(attrib, dtype=np.float)))
     return list(ssig2)
 
+
 def sample_std_array2(attribdata):
     end = len(attribdata[0])
     ssig2 = []
-    discrete_vals = [1, 6, 7, 8]
+    discrete_vals = [1, 6, 7]
     for col in range(0, end):
         if col in discrete_vals:
             attrib = np.array(column_getter(attribdata, col), dtype=np.int)
@@ -840,27 +897,27 @@ def linear_calculation_for_w(x, y):
 
     XX = [a * b for a, b in zip(x, x)]
 
-    XXsum = sum(XX)
+    xxsum = sum(XX)
 
-    XYsum = sum(XY)
+    xysum = sum(XY)
 
-    N = len(x)
+    n = len(x)
 
-    A = [[N, Xsum],
-         [Xsum, XXsum]]
+    a = [[n, Xsum],
+         [Xsum, xxsum]]
 
     y = [Ysum,
-         XYsum]
+         xysum]
 
-    Anp = np.array(A)
+    anp = np.array(a)
 
-    Anpinv = np.linalg.inv(Anp)
+    anpinv = np.linalg.inv(anp)
 
-    Ynp = np.array(y)
+    ynp: ndarray = np.array(y)
 
-    W = np.dot(Anpinv, Ynp)
+    w = np.dot(anpinv, ynp)
 
-    return W
+    return w
 
 
 # uses linear regression to generate a slpme(m) and intercept(b) value

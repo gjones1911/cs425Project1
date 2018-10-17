@@ -83,6 +83,8 @@ print(format("\n"))
 '''
 count = 0
 
+
+#convert string versions of the data sets to into numerical values(either discrete or continous)
 for row in range(len(dataarray)-count):
     #print(row)
     for col in range(len(dataarray[0])):
