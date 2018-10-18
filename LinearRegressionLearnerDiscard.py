@@ -50,7 +50,7 @@ continuous_discrete = [0,   # 0 mpg
                       0,   # 5 acceleration
                       1,   # 6 model year
                       1,   # 7 Origin
-                      1,]  # 8 car type number
+                      1, ]  # 8 car type number
 
 # get the data using data cleaner
 # returns a 2D array where rows are observations and columns
@@ -66,10 +66,14 @@ dataarray = DC.DataCleaner("CarData.txt")
 # where the bad data is as the values as a list
 baddatdic = GDW.FindColBadData(dataarray.copy(), '?')
 
+# remove the column for car name
 dataarray = DataProcessor.remove_col(list(dataarray), 8)
 
+# Convert strings to numerical values
+# using the continuous/discrete array to turn the value into a float or an int respectively
 dataarray = DataProcessor.convert_strings_float_int(list(dataarray), '?',  continuous_discrete)
 
+# remove the rows with bad data
 dataarray = DataProcessor.remove_row(list(dataarray), baddatdic[3])
 
 # returns a dictionary where the keys are car names and the values

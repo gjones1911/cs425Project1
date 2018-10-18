@@ -143,8 +143,10 @@ def find_col_bad_data(dataarray, badsig):
 
 # removes selected data found in bad_list
 def remove_row(array, bad_list):
+    count = 0
     for entry in bad_list:
-        del array[entry]
+        del array[entry - count]
+        count += 1
     return array
 
 
@@ -173,6 +175,55 @@ def convert_strings_float_int(data_array, bad_sig,  con_dis):
                     data_array[row][col] = float(data_array[row][col])
 
     return data_array
+
+
+def getlinregmissingdata(regdata, baddic, w):
+    r = []
+
+    #print('----------------------------------------------------------------regdata')
+    #print(regdata)
+
+    for entry in baddic:
+        dlist = baddic[entry]
+        for row in dlist:
+            #print('------------row')
+            #print(row)
+            x = []
+            x.append(1)
+            for col in range(len(regdata[0])):
+                if col != entry:
+                    x.append(regdata[row][col])
+            Xnp = np.array(x, dtype=np.float64)
+            Wnp = np.array(w, dtype=np.float64)
+            '''
+            print('length of Wnp')
+            print(Wnp)
+            print('length Xnp')
+            print(Xnp)
+            '''
+            r.append(np.dot(Xnp, Wnp))
+    return r
+
+
+# replaces bad data with the given value
+def ReplaceBadDatavec(data, baddic, vec):
+    for entry in baddic:
+        badlist = baddic[entry]
+        for idx in range(len(badlist)):
+            row = badlist[idx]
+            data[row][entry] = float(vec[idx])
+    return data.copy()
+
+
+# uses linear regression to fill in missing/bad data
+def linear_regression_replacer(data, m, b, Xcol, Ycol, baddataPoints):
+    datapointrows = baddataPoints[Ycol]
+    for row in datapointrows:
+        x = data[row][Xcol]
+        print('x ',x)
+        print(m*x+b)
+        data[row][Ycol] = m*x + b
+    return data.copy()
 
 
 def replace_item(data_array, bad_data_dictionary, value_array):

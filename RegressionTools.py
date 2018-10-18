@@ -184,6 +184,34 @@ def get_r_data(x_data, w):
         r.append(np.dot(np.array(x_observation, dtype=np.float64), wnp))
     return r
 
+# used for linear regression imputation
+def getlinregmissingdata(regdata, baddic, w):
+    r = []
+
+    #print('----------------------------------------------------------------regdata')
+    #print(regdata)
+
+    for entry in baddic:
+        dlist = baddic[entry]
+        for row in dlist:
+            #print('------------row')
+            #print(row)
+            x = []
+            x.append(1)
+            for col in range(len(regdata[0])-1):
+                if col != entry:
+                    x.append(regdata[row][col])
+            Xnp = np.array(x, dtype=np.float64)
+            Wnp = np.array(w, dtype=np.float64)
+            '''
+            print('length of Wnp')
+            print(Wnp)
+            print('length Xnp')
+            print(Xnp)
+            '''
+            r.append(np.dot(Xnp, Wnp))
+    return r
+
 
 # performs multiple linear regrsion on the x and y data
 # and returns the generated parameter vector W
