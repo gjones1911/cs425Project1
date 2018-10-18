@@ -264,7 +264,6 @@ def CalculateMSE(Gmodel, Rvalidate):
     return 1 - TpDivBtm
 
 
-
 # can be used to train a data set and
 def GTrainer(DataArray):
     inc = 0
@@ -1174,10 +1173,10 @@ def least_squares_estimate(darray, yarray):
     #return np.mean(np.array(diffList, dtype=np.float64))
 
 
-#will use linear regression to find the first attribute
-#to add to the F array for forward selection
-#will split the data into training and validation sets
-#according to split parameter
+# will use linear regression to find the first attribute
+# to add to the F array for forward selection
+# will split the data into training and validation sets
+# according to split parameter
 def find_first(x_data, y_data, split):
 
     col_size = len(x_data[0])

@@ -83,8 +83,15 @@ def dos_data_splitter(xdata, ydata, splitval_array):
     y_training = []
     y_validation = []
 
-    train_limit = len(xdata)*splitval_array[0]
+    train_limit = int(len(xdata)*splitval_array[0])
     val_limit = len(xdata) - train_limit
+
+    # print(format('\n'))
+    # print('train limit')
+    # print(train_limit)
+    # print('validation limit')
+    # print(val_limit)
+    # print(format('\n'))
 
     # used to pick random observations for each data set
     random_selection = np.random.choice(len(xdata), len(ydata), replace=False)
@@ -95,7 +102,7 @@ def dos_data_splitter(xdata, ydata, splitval_array):
         training_data.append(xdata[row])
         y_training.append(ydata[row])
     # grab validation data set
-    for idx in range(train_limit, val_limit):
+    for idx in range(train_limit, val_limit+train_limit):
         row = random_selection[idx]
         validation_data.append(xdata[row])
         y_validation.append(ydata[row])
@@ -178,38 +185,38 @@ def replace_item(data_array, bad_data_dictionary, value_array):
     return data_array
 
 
-# returns an independent array made of the data minus Ycol and a dependent vector that comes from the column
-# Ycol out of the darray
-def IndeDeparrays(darray, Ycol):
+# returns an independent array made of the data minus y column and a dependent vector that comes from the column
+# Y column out of the data array
+# ignores the last column all together
+def i_d_arrays(d_array, y_col):
 
-    Y = []
-    X = []
+    y = []
+    x = []
 
-    arry = list(darray)
+    arry = list(d_array)
 
     for row in arry:
 
-        Y.append(row[Ycol])
+        y.append(row[y_col])
 
-        #del row[Ycol]
+        # del row[Ycol]
 
         xc = list()
         xc.append(1)
 
         for idx in range(len(row)-1):
-            if idx != Ycol:
+            if idx != y_col:
                 xc.append(row[idx])
 
-        X.append(xc)
+        x.append(xc)
 
-    return Y, X
+    return y, x
 
 
-
-# will return an X array full of independant variables, and a Y array of the dependant
+# will return an X array full of independent variables, and a Y array of the dependant
 # variables
 def x_y_getter(array, y_col):
-    Y = column_getter(array, y_col)
+    y = column_getter(array, y_col)
 
     front = [array[i][0:y_col] for i in range(0, len(array))]
     back = [array[i][y_col + 1:] for i in range(0, len(array))]
@@ -218,43 +225,16 @@ def x_y_getter(array, y_col):
     # chunk2 = hlf1[1] + endr[1]
     # chunk = [chunk1] + [chunk2]
 
-    X = [front[0] + back[0]]
+    x = [[1] + front[0] + back[0]]
 
     for idx in range(1, len(array)):
-        X += [front[idx] + back[idx]]
+        x += [[1] + front[idx] + back[idx]]
 
-    return X, Y
+    return x, y
 
-
-# returns an independent array made of the data minus Ycol and a dependent vector that comes from the column
-# Ycol out of the darray
-def IndeDeparrays(darray, Ycol):
-
-    Y = []
-    X = []
-
-    arry = list(darray)
-
-    for row in arry:
-
-        Y.append(row[Ycol])
-
-        #del row[Ycol]
-
-        xc = []
-        xc.append(1)
-
-        for idx in range(len(row)-1):
-            if idx != Ycol:
-                xc.append(row[idx])
-
-        X.append(xc)
-
-    return Y, X
 
 # -------------------------------------------------------------------------------------------------------
 # ----------------------------------------Statistics----------------------------------------------------
-
 def max_min_array_getter(attrib_data):
     min_array = []
     max_array = []
@@ -275,6 +255,32 @@ def max_min_array_getter(attrib_data):
         max_array.append(np.amax(attrib))
 
     return min_array, max_array
+
+
+def z_number(x, mu, sigma):
+    return (x - mu)/sigma
+
+
+def normalization(x, x_min, x_max):
+    return (x - x_min)/(x_max - x_min)
+
+
+def normalize_data(attrib_d, mean_l, sigma_l, min_l, max_l, con_dis):
+    col_end = len(attrib_d[0])
+    row_end = len(attrib_d)
+
+    ret_array = attrib_d[:]
+
+    for c in range(0, col_end):
+
+        for r in range(0, row_end):
+
+            if con_dis[c] == 0:
+                ret_array[r][c] = z_number(attrib_d[r][c], mean_l[c], sigma_l[c])
+            elif con_dis[c] == 1:
+                ret_array[r][c] = normalization(attrib_d[r][c], min_l[c], max_l[c])
+
+    return ret_array
 
 
 # performs z normalization on the given attribute array
@@ -369,4 +375,3 @@ def quartiles(attrib_data):
 
     return lower_q, upper_q, mid, a_median
 # ------------------------------------------------------------------------------------------------------
-

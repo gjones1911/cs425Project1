@@ -8,11 +8,12 @@
 
 # import timeit
 # import pandas as pd
-# import numpy as np
-from matplotlib.pyplot import *
+# from matplotlib.pyplot import *
+import numpy as np
 import GDataWorks
 import DataCleaner
 import DataProcessor
+import RegressionTools
 
 
 # stores the name of a column of attributes
@@ -31,14 +32,14 @@ attribute_label_array = ['mpg',          # 0
 # used for calculations to tell if the value
 # needed is continous of discrete
 continuous_discrete = [0,   # 0 mpg
-                      1,   # 1 cylinders
-                      0,   # 2 displacement
-                      0,   # 3 horse power
-                      0,   # 4 weight
-                      0,   # 5 acceleration
-                      1,   # 6 model year
-                      1,   # 7 Origin
-                      1, ]  # 8 car type number
+                       1,   # 1 cylinders
+                       0,   # 2 displacement
+                       0,   # 3 horse power
+                       0,   # 4 weight
+                       0,   # 5 acceleration
+                       1,   # 6 model year
+                       1,   # 7 Origin
+                       1, ]  # 8 car type number
 
 # get the data using data cleaner
 # returns a 2D array where rows are observations and columns
@@ -47,7 +48,7 @@ dataarray = DataCleaner.DataCleaner("CarData.txt")
 
 
 # returns a list of different car types
-car_type_array = GDataWorks.get_car_types(list(dataarray))
+# car_type_array = GDataWorks.get_car_types(list(dataarray))
 
 # Find the bad data and store it in a map keyed on the column
 # where the bad data was found and with the rows in that column
@@ -55,7 +56,7 @@ car_type_array = GDataWorks.get_car_types(list(dataarray))
 # baddatdic = GDW.FindColBadData(dataarray.copy(), '?')
 bad_dat_dic = DataProcessor.find_col_bad_data(dataarray.copy(), '?')
 
-print(bad_dat_dic)
+# print(bad_dat_dic)
 
 
 # returns a dictionary where the keys are car names and the values
@@ -220,7 +221,202 @@ print('Max array')
 print(max_array)
 print(format('\n'))
 
-z_normalized_data = DataProcessor.z_normalization(dataarray, smu, std)
+print('dataarray')
+print(dataarray)
 
-print('Z normalized data')
-print(z_normalized_data)
+x_array, y_array = DataProcessor.x_y_getter(list(dataarray), 0)
+print("mpg")
+print(y_array)
+print("Independent Attributes")
+print(x_array)
+
+
+normalized_data = DataProcessor.normalize_data(list(dataarray), smu, std, min_array, max_array, continuous_discrete)
+
+print('normalized data')
+print(attribute_label_array)
+print(normalized_data)
+
+x_array_n, y_array_n = DataProcessor.x_y_getter(dataarray, 0)
+
+print(format('\n'))
+print('normalized data')
+print("mpg")
+print(y_array_n)
+print("Independent Attributes")
+print(x_array_n)
+print(format('\n'))
+
+print('original data')
+print("mpg")
+print(y_array)
+print("Independent Attributes")
+print(x_array)
+print(format('\n'))
+
+split_array1 = [[.60, .40], [.60, .40], [.60, .40], [.60, .40], [.60, .40], [.60, .40], [.60, .40], [.60, .40],
+                [.60, .40], [.60, .40], [.60, .40], [.60, .40], [.60, .40], [.60, .40], [.60, .40], [.60, .40],
+                [.60, .40]]
+
+split_array2 = [[.75, .25], [.75, .25], [.75, .25], [.75, .25], [.75, .25], [.75, .25], [.75, .25], [.75, .25],
+                [.75, .25], [.75, .25], [.75, .25], [.75, .25], [.75, .25], [.75, .25], [.75, .25], [.75, .25],
+                [.75, .25]]
+
+split_array3 = [[.70, .30], [.70, .30], [.70, .30], [.70, .30], [.70, .30], [.70, .30], [.70, .30], [.70, .30],
+                [.70, .30], [.70, .30], [.70, .30], [.70, .30], [.70, .30], [.70, .30], [.70, .30], [.70, .30],
+                [.70, .30]]
+
+split_array4 = [[.50, .50], [.50, .50], [.50, .50], [.50, .50], [.50, .50], [.50, .50], [.50, .50], [.50, .50],
+                [.50, .50], [.50, .50], [.50, .50], [.50, .50], [.50, .50], [.50, .50], [.50, .50], [.50, .50],
+                [.50, .50]]
+
+test_l = int(398*.60)
+print(test_l)
+print(int(398*.40))
+print(398 - test_l)
+
+# ----------------------------------------with regulur data------------------------------------------------------------
+print(format('\n'))
+print('------------------------------------------with regular data--------------------------------------------------')
+# Coefficient of Determination :
+best_cod, bs_cod, cod_list, rand_list_cod2, best_rand_cod2 = RegressionTools.train_model_cod_dos(list(x_array), list(y_array), split_array1)
+print('Coefficient of Determination')
+print('best_cod Cod')
+print(best_cod)
+print('best split Cod')
+print(bs_cod)
+print("cod list")
+print(cod_list)
+print('Average error cod')
+print(np.around(np.mean(np.array(cod_list, dtype=np.float), dtype=np.float), 2))
+# print('Best rand cod 2')
+# print(best_rand_cod2)
+# print('rand list cod 2')
+# print(rand_list_cod2)
+print(format("\n"))
+
+# Least Square Error
+best_lse, bs_lse, lse_list, rand_list_lse2, best_rand_lse2 = RegressionTools.train_model_lse_dos(list(x_array), list(y_array), split_array1)
+print('Least Square Error')
+print('best lse ')
+print(best_lse)
+print('best split lse')
+print(bs_lse)
+print("lse list")
+print(lse_list)
+print('Average error lse')
+print(np.around(np.mean(np.array(lse_list, dtype=np.float), dtype=np.float), 2))
+# print('Best rand lse 2')
+# print(best_rand_lse2)
+# print('rand list lse 2')
+# print(rand_list_lse2)
+print(format("\n"))
+
+# Mean Square Error :
+best_mse, bs_mse, mse_list, rand_list_mse2, best_rand_mse2 = RegressionTools.train_model_mse_dos(list(x_array), list(y_array), split_array1)
+print('mean Square Error')
+print('best mse ')
+print(best_mse)
+print('best split mse')
+print(bs_mse)
+print("mse list")
+print(mse_list)
+print('Average error mse')
+print(np.around(np.mean(np.array(mse_list, dtype=np.float), dtype=np.float), 2))
+# print('Best rand lse 2')
+# print(best_rand_lse2)
+# print('rand list lse 2')
+# print(rand_list_lse2)
+print('---------------------------------------end with regular data--------------------------------------------------')
+print(format("\n"))
+
+# ----------------------------------------with normalized data---------------------------------------------------------
+print(format('\n'))
+print('------------------------------------------with normalized data------------------------------------------------')
+# cod
+best_cod_n, bs_cod_n, cod_list_n, rand_list_cod2_n, best_rand_cod2_n = RegressionTools.train_model_cod_dos(list(x_array_n), list(y_array_n), split_array1)
+print('Coefficient of Determination normalized')
+print('best_cod Cod normalized')
+print(best_cod_n)
+print('best split Cod normalized')
+print(bs_cod_n)
+print("cod list normalized")
+print(cod_list_n)
+print('Average error cod normalized')
+print(np.around(np.mean(np.array(cod_list_n, dtype=np.float), dtype=np.float), 2))
+# print('Best rand cod 2')
+# print(best_rand_cod2)
+# print('rand list cod 2')
+# print(rand_list_cod2)
+print(format("\n"))
+
+# Least Square Error :
+best_lse_n, bs_lse_n, lse_list_n, rand_list_lse2_n, best_rand_lse2_n = RegressionTools.train_model_lse_dos(list(x_array_n), list(y_array_n), split_array1)
+print('Least Square Error norm')
+print('best lse norm')
+print(best_lse_n)
+print('best split lse norm')
+print(bs_lse_n)
+print("lse list norm")
+print(lse_list_n)
+print('Average error lse norm')
+print(np.around(np.mean(np.array(lse_list_n, dtype=np.float), dtype=np.float), 2))
+# print('Best rand lse 2')
+# print(best_rand_lse2)
+# print('rand list lse 2')
+# print(rand_list_lse2)
+print(format("\n"))
+
+# Mean Square Error :
+best_mse_n, bs_mse_n, mse_list_n, rand_list_mse2_n, best_rand_mse2_n = RegressionTools.train_model_mse_dos(list(x_array_n), list(y_array_n), split_array1)
+print('mean Square Error norm')
+print('best mse norm')
+print(best_mse_n)
+print('best split mse norm')
+print(bs_mse_n)
+print("mse list norm")
+print(mse_list_n)
+print('Average error mse norm')
+print(np.around(np.mean(np.array(mse_list_n, dtype=np.float), dtype=np.float), 2))
+# print('Best rand lse 2')
+# print(best_rand_lse2)
+# print('rand list lse 2')
+# print(rand_list_lse2)
+print(format("\n"))
+
+
+
+print('---------------------------------------end with regular data--------------------------------------------------')
+print(format("\n"))
+
+
+
+
+
+F, best_mse = RegressionTools.forward_selector(list(x_array), list(y_array), split_array1[0])
+
+print('best MSR is ')
+print(best_mse)
+print('F')
+print(len(F))
+print(len(F[0]))
+print(F)
+print(format('\n'))
+
+
+print('normalized data')
+F_n, best_mse_n = RegressionTools.forward_selector(list(x_array_n), list(y_array_n), split_array1[0])
+
+print('best MSR norm is ')
+print(best_mse_n)
+print('F norm')
+print(len(F_n))
+print(len(F_n[0]))
+print(F_n)
+print(format('\n'))
+
+
+# test = [1,2,3,4,5]
+# for i in range(0, 10):
+#    random_selection = np.random.choice(test, 5, replace=False)
+#    print(random_selection)
