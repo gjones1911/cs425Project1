@@ -93,7 +93,12 @@ print(dataarray)
 
 # convert string versions of the data sets to into numerical values(either discrete or continous)
 dataarray = DataProcessor.convert_strings_float_int(list(dataarray), '?',  continuous_discrete)
-
+print(format('\n'))
+for entry in bad_dat_dic:
+    for row in bad_dat_dic[entry]:
+        print(dataarray[row][3])
+        print(dataarray[row])
+print(format('\n'))
 # for row in range(len(dataarray)):
 #    #print(row)
 #    for col in range(len(dataarray[0])):
@@ -157,7 +162,12 @@ for entry in baddatdic:
 value_array = [HP_mean]
 
 dataarray = DataProcessor.replace_item(list(dataarray),bad_dat_dic, value_array)
-
+print(format('\n'))
+for entry in bad_dat_dic:
+    for row in bad_dat_dic[entry]:
+        print(dataarray[row][3])
+        print(dataarray[row])
+print(format('\n'))
 # replace missing data with the average of the known data
 # for entry in bad_dat_dic[3]:
 #    dataarray[entry][3] = HP_mean

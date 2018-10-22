@@ -1,8 +1,322 @@
 import numpy as np
 import DataProcessor
+import operator
 
 
+# -----------------------------------Teasting for error functions-------------------------------------------- #
+
+# -----------------------------------Least Squares Estimate---------------------------------------------------
+# will perform linear regression using the w list(w_l)
+# and the data list(dat_l) to get some model values
+# and then calculate the various lse's using those model values and
+# the y data list(y_dat_l)
+# returns an array containing:
+# a list of all calculated lse values(dat_lse), a list of the best lse's (dat_best))
+# The best lse found during testing (best_lse), and the index into the W list where
+# the generated the best lse's
+def test_data_set_lse(w_l, dat_l, y_dat_l):
+    best_lse = 10000        # used to keep track of smalles LSE
+    dat_lse = list()     # a list of all calculated lse
+    dat_best = list()    # a list of the best lse
+    best_w_idx = list()  # the indices into w_1 array that got the best lse
+
+    for i in range(len(w_l)):
+        gmodel = get_r_data(dat_l[i], w_l[i])
+        lse = np.around(least_squares_estimate(gmodel, y_dat_l[i]), 4)
+        dat_lse.append(lse)
+        if best_lse > lse:
+            dat_best.append(lse)
+            best_lse = lse
+            best_w_idx.append(i)
+    ret_array = [dat_lse, dat_best, best_lse, best_w_idx]
+
+    return ret_array
+
+
+# -----------------------------------COD-------------------------------------------------------------
+# will perform linear regression using the w list(w_l)
+# and the data list(dat_l) to get some model values
+# and then calculate the various COD's using those model values and
+# the y data list(y_dat_l)
+# returns an array containing:
+# an list of all calculated cod values(dat_cod), a list of the best cod's (dat_best))
+# The best COD found during testing (best_cod), and the index into the W list where
+# the generated the best COD's
+def test_data_set_cod(w_l, dat_l, y_dat_l):
+
+    best_cod = 0
+    dat_cod = list()
+    dat_best = list()
+    best_w_idx = list()
+
+    for i in range(len(w_l)):
+        gmodel = get_r_data(dat_l[i], w_l[i])
+        cod = np.around(calculate_cod(gmodel, y_dat_l[i]), 4)
+        dat_cod.append(cod)
+
+        if best_cod < cod and cod > 0 and cod <= 1:
+            dat_best.append(cod)
+            best_cod = cod
+            best_w_idx.append(i)
+
+    ret_array = [dat_cod, dat_best, best_cod, best_w_idx]
+
+    return ret_array
+
+
+# will perform linear regression using the w list(w_l)
+# and the data list(dat_l) to get some model values
+# and then calculate the various COD's using those model values and
+# the y data list(y_dat_l)
+# returns an array containing:
+# an list of all calculated cod values(dat_cod), a list of the best cod's (dat_best))
+# The best COD found during testing (best_cod), and the index into the W list where
+# the generated the best COD's
+def test_data_set_mse(w_l, dat_l, y_dat_l):
+
+    best_mse = 1000
+    dat_mse = list()
+    dat_best = list()
+    best_w_idx = list()
+
+    for i in range(len(w_l)):
+        gmodel = get_r_data(dat_l[i], w_l[i])
+        mse = np.around(mean_square_error(gmodel, y_dat_l[i]), 4)
+        dat_mse.append(mse)
+
+        if best_mse > mse:
+            dat_best.append(mse)
+            best_mse = mse
+            best_w_idx.append(i)
+
+    ret_array = [dat_mse, dat_best, best_mse, best_w_idx]
+
+    return ret_array
+
+
+# -----------------------------------------------Collect parameters-----------------------------------------------
+
+
+# Splits the given data into training and validation sets
+# uses the test set to calculate a list of W values (parameters w_list)
+# a list of training sets (tr_l), y values for that training set (y_tr_l)
+# a list of validation sets, and there y values (val_l and y_val_l respectively)
+# returns those in a list in the order: [w_list, tr_l, y_tr_list, val_l, y_val_l]]
+#                                          0      1       2         3       4
+def collect_parameters2(x_d, y_d, split_a):
+    w_list = list()
+    tr_l = list()
+    y_tr_l = list()
+    val_l = list()
+    y_val_l = list()
+
+    for x in range(len(split_a)):
+        tr, val, y_tr, y_val, rand = DataProcessor.dos_data_splitter(x_d, y_d, split_a[x])
+
+        # get w from training data
+        w_list.append(multi_linear_regressor(tr, y_tr))
+        tr_l.append(tr)
+        y_tr_l.append(y_tr)
+        val_l.append(val)
+        y_val_l.append(y_val)
+
+    return w_list, tr_l, y_tr_l, val_l, y_val_l
+
+
+# ------------------------------------Used to get the average of the best training and validation W's----------------
+
+def get_avg_best_w(w_l, best_train_w, best_val_w, tr_l, y_tr_l, val_l, y_val_l):
+
+    # grab the largest cod for each training and validation sets
+    tr_b_w = best_train_w
+    val_b_w = best_val_w
+
+    # get the average between the best cod for training and validation best W
+    w_col_sum = list(map(operator.add, tr_b_w, val_b_w))
+    div_l = list()
+    for x in range(len(w_col_sum)):
+        div_l.append(2)
+
+    avg_all_w = list(map(operator.truediv, w_col_sum, div_l))
+
+    tr_avg_cod = list()
+    val_avg_cod = list()
+
+    for x in range(len(tr_l)):
+        g_t = get_r_data(tr_l[x], avg_all_w)
+        cod_a = calculate_cod(g_t, y_tr_l[x])
+        tr_avg_cod.append(cod_a)
+
+    for x in range(len(val_l)):
+        g_t = get_r_data(val_l[x], avg_all_w)
+        cod_a = calculate_cod(g_t, y_val_l[x])
+        val_avg_cod.append(cod_a)
+
+    val_avg_cod_avg_b = np.mean(np.array(val_avg_cod, dtype=np.float), dtype=np.float)
+    tr_avg_cod_avg_b = np.mean(np.array(tr_avg_cod, dtype=np.float), dtype=np.float)
+
+    return val_avg_cod_avg_b, tr_avg_cod_avg_b
+
+
+def get_avg_best_w_lse(w_l, best_train_w, best_val_w, tr_l, y_tr_l, val_l, y_val_l):
+
+    # grab the largest cod for each training and validation sets
+    tr_b_w = best_train_w
+    val_b_w = best_val_w
+
+    # get the average between the best cod for training and validation best W
+    w_col_sum = list(map(operator.add, tr_b_w, val_b_w))
+    div_l = list()
+    for x in range(len(w_col_sum)):
+        div_l.append(2)
+
+    avg_all_w = list(map(operator.truediv, w_col_sum, div_l))
+
+    tr_avg_cod = list()
+    val_avg_cod = list()
+
+    for x in range(len(tr_l)):
+        g_t = get_r_data(tr_l[x], avg_all_w)
+        lse_a = least_squares_estimate(g_t, y_tr_l[x])
+        tr_avg_cod.append(lse_a)
+
+    for x in range(len(val_l)):
+        g_t = get_r_data(val_l[x], avg_all_w)
+        lse_a = least_squares_estimate(g_t, y_val_l[x])
+        val_avg_cod.append(lse_a)
+
+    val_avg_cod_avg_b = np.mean(np.array(val_avg_cod, dtype=np.float), dtype=np.float)
+    tr_avg_cod_avg_b = np.mean(np.array(tr_avg_cod, dtype=np.float), dtype=np.float)
+
+    return val_avg_cod_avg_b, tr_avg_cod_avg_b
+
+
+def get_avg_best_w_mse(w_l, best_train_w, best_val_w, tr_l, y_tr_l, val_l, y_val_l):
+
+    # grab the largest cod for each training and validation sets
+    tr_b_w = best_train_w
+    val_b_w = best_val_w
+
+    # get the average between the best cod for training and validation best W
+    w_col_sum = list(map(operator.add, tr_b_w, val_b_w))
+    div_l = list()
+    for x in range(len(w_col_sum)):
+        div_l.append(2)
+
+    avg_all_w = list(map(operator.truediv, w_col_sum, div_l))
+
+    tr_avg_cod = list()
+    val_avg_cod = list()
+
+    for x in range(len(tr_l)):
+        g_t = get_r_data(tr_l[x], avg_all_w)
+        mse_a = mean_square_error(g_t, y_tr_l[x])
+        tr_avg_cod.append(mse_a)
+
+    for x in range(len(val_l)):
+        g_t = get_r_data(val_l[x], avg_all_w)
+        mse_a = mean_square_error(g_t, y_val_l[x])
+        val_avg_cod.append(mse_a)
+
+    val_avg_cod_avg_b = np.mean(np.array(val_avg_cod, dtype=np.float), dtype=np.float)
+    tr_avg_cod_avg_b = np.mean(np.array(tr_avg_cod, dtype=np.float), dtype=np.float)
+
+    return val_avg_cod_avg_b, tr_avg_cod_avg_b
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# will attempt to train the data using the objects in
+# a list of parameters:
+#  values(w), training data, y for training data, validation data, y for the validation data
+def train_model_cod2(param_tr_val_a):
+    w_list = param_tr_val_a[0]
+
+    tr_l = param_tr_val_a[1]
+    y_tr_l = param_tr_val_a[2]
+
+    val_l = param_tr_val_a[3]
+    y_val_l = param_tr_val_a[4]
+
+    tr_cod, tr_best, best_codtr, best_w_idx_tr = test_data_set_cod(w_list, tr_l, y_tr_l)
+    val_cod, val_best, best_codval, best_w_idx_val = test_data_set_cod(w_list, val_l, y_val_l)
+
+    # grab the largest cod for each training and validation sets
+    tr_b_w = w_list[best_w_idx_tr[-1]]
+    val_b_w = w_list[best_w_idx_val[-1]]
+
+    val_avg_cod_avg_b, tr_avg_cod_avg_b = get_avg_best_w(w_list, tr_b_w, val_b_w, tr_l, y_tr_l, val_l, y_val_l)
+    tr_avg_cod = np.mean(np.array(tr_cod, dtype=np.float), dtype=np.float)
+    val_avg_cod = np.mean(np.array(val_cod, dtype=np.float), dtype=np.float)
+
+    ret_val = [[tr_cod, tr_best, best_codtr, best_w_idx_tr, tr_avg_cod],
+               [val_cod, val_best, best_codval, best_w_idx_val, val_avg_cod],
+               [tr_avg_cod_avg_b, val_avg_cod_avg_b]]
+    return ret_val
+
+
+# will attempt to train the data using the objects in
+# a list of parameter values(w), training data, y for training data
+# validation data, y for the validation data
+def train_model_lse2(param_tr_val_a):
+    w_list = param_tr_val_a[0]
+
+    tr_l = param_tr_val_a[1]
+    y_tr_l = param_tr_val_a[2]
+
+    val_l = param_tr_val_a[3]
+    y_val_l = param_tr_val_a[4]
+
+    tr_lse, tr_best, best_lsetr, best_w_idx_tr = test_data_set_lse(w_list, tr_l, y_tr_l)
+    val_lse, val_best, best_lseval, best_w_idx_val = test_data_set_lse(w_list, val_l, y_val_l)
+
+    # grab the largest cod for each training and validation sets
+    tr_b_w = w_list[best_w_idx_tr[-1]]
+    val_b_w = w_list[best_w_idx_val[-1]]
+
+    val_avg_lse_avg_b, tr_avg_lse_avg_b = get_avg_best_w_lse(w_list, tr_b_w, val_b_w, tr_l, y_tr_l, val_l, y_val_l)
+    tr_avg_lse = np.mean(np.array(tr_lse, dtype=np.float), dtype=np.float)
+    val_avg_lse = np.mean(np.array(val_lse, dtype=np.float), dtype=np.float)
+
+    ret_val = [[tr_lse, tr_best, best_lsetr, best_w_idx_tr, tr_avg_lse],
+               [val_lse, val_best, best_lseval, best_w_idx_val, val_avg_lse],
+               [tr_avg_lse_avg_b, val_avg_lse_avg_b]]
+    return ret_val
+
+
+# will attempt to train the data using the objects in
+# a list of parameter values(w), training data, y for training data
+# validation data, y for the validation data
+def train_model_mse2(param_tr_val_a):
+    w_list = param_tr_val_a[0]
+
+    tr_l = param_tr_val_a[1]
+    y_tr_l = param_tr_val_a[2]
+
+    val_l = param_tr_val_a[3]
+    y_val_l = param_tr_val_a[4]
+
+    tr_mse, tr_best, best_msetr, best_w_idx_tr = test_data_set_mse(w_list, tr_l, y_tr_l)
+    val_mse, val_best, best_mseval, best_w_idx_val = test_data_set_mse(w_list, val_l, y_val_l)
+
+    # grab the largest cod for each training and validation sets
+    tr_b_w = w_list[best_w_idx_tr[-1]]
+    val_b_w = w_list[best_w_idx_val[-1]]
+
+    val_avg_mse_avg_b, tr_avg_mse_avg_b = get_avg_best_w_mse(w_list, tr_b_w, val_b_w, tr_l, y_tr_l, val_l, y_val_l)
+    tr_avg_mse = np.mean(np.array(tr_mse, dtype=np.float), dtype=np.float)
+    val_avg_mse = np.mean(np.array(val_mse, dtype=np.float), dtype=np.float)
+
+    ret_val = [[tr_mse, tr_best, best_msetr, best_w_idx_tr, tr_avg_mse],
+               [val_mse, val_best, best_mseval, best_w_idx_val, val_avg_mse],
+               [tr_avg_mse_avg_b, val_avg_mse_avg_b]]
+    return ret_val
+
+# ----------------------------------------------------------------------------------------------------------------
 # ---------------------------------------------Trainers---------------------------------------------------------
+
+# def train_cod_dos(x_d, y_d,)
+
+
 # used to attain the best test size with the highest coefficient of determination
 # can use split_array to either run multiple runs of the same size array to get an average error
 # or have differnt sizes in the array to look for the best size vs cod
@@ -12,10 +326,8 @@ def train_model_cod_dos(x_data, y_data, split_array):
     print(len(x_data))
     # split_array = int(len(x_data) / 16)
     best_cod = 0
-    bs = list()
     cod_list = list()
     length_array = len(split_array)
-    best_split = []
     best_rand = list(list([1]))
     rand_list = list()
 
@@ -40,9 +352,13 @@ def train_model_cod_dos(x_data, y_data, split_array):
         rand_list.append(rand)
         if best_cod < cod and cod > 0 and cod <= 1:
             best_cod = cod
-            bs = split_array[x]
             best_rand[0] = rand
-    return best_cod, bs, cod_list, rand_list, best_rand
+
+    avg_cod = np.mean(np.array(cod_list, dtype=np.float), dtype=np.float)
+
+    result_array = list([best_cod, cod_list, avg_cod])
+
+    return result_array
 
 
 # used to attain the best test size with the hightest coefficient of determination
@@ -50,7 +366,7 @@ def train_model_lse_dos(x_data, y_data, split_array):
     # training_data, validation_data, y_training, y_validation
     # print(len(Xdata))
     print(format("\n"))
-    bs = 10
+    bs = list()
     best_ls = 1000
     ls_list = list()
     rand_list = list()
@@ -58,16 +374,6 @@ def train_model_lse_dos(x_data, y_data, split_array):
     # train_set, validation_set, y_training, y_validation = DataProcessor.dos_data_splitter(Xdata, Ydata, split_array)
     # while len(validation_set) >= 10:
     for x in range(0, len(split_array)):
-        '''
-        print('len(train_set)')
-        print(len(train_set))
-        print('length of validation_set')
-        print(len(validation_set))
-        print('length of y_training')
-        print(len(y_training))
-        print('length of y_validation')
-        print(len(y_validation))
-        '''
 
         train, validation, y_training, y_validation, rand = DataProcessor.dos_data_splitter(x_data, y_data, split_array[x])
         w_params = multi_linear_regressor(train, y_training)
@@ -87,7 +393,7 @@ def train_model_lse_dos(x_data, y_data, split_array):
 def train_model_mse_dos(x_data, y_data, split_array):
     # training_data, validation_data, y_training, y_validation
     print(format("\n"))
-    bs = 10
+    bs = list()
     best_mse = 1000
     mse_list = list()
     best_rand = list(list([0]))
@@ -119,6 +425,490 @@ def train_model_mse_dos(x_data, y_data, split_array):
 
     return best_mse, bs, mse_list, rand_list, best_rand,
 
+
+#                  -------------------------------------------------------
+#                  -------------------------------------------------------
+#                  -------------------------------------------------------
+#                  -------------------------------------------------------
+#                  -------------------------------------------------------
+#                  -------------------------------------------------------
+# used to attain the best test size with the highest coefficient of determination
+# can use split_array to either run multiple runs of the same size array to get an average error
+# or have differnt sizes in the array to look for the best size vs cod
+def train_model_cod_tres(x_data, y_data, split_array):
+    # training_data, validation_data, y_training, y_validation
+    # print(format("\n"))
+    # print(len(x_data))
+    # split_array = int(len(x_data) / 16)
+
+    best_cod = 0
+    best_cod2 = 0
+    cod_list = list()
+    cod_list2 = list()
+    length_array = len(split_array)
+    best_rand = list(list([1]))
+    rand_list = list()
+    w_list = list()
+
+    y_train_list = list()
+    cod_tr_l = list()
+
+    val_list = list()
+    y_val_list = list()
+    val_best_w = list()
+
+    test_list = list()
+    y_test_list = list()
+
+    best_params = list()
+    best_params2 = list()
+
+    # while len(validation_set) >= 10:
+    for x in range(0, length_array):
+        tr, val, y_tr, y_val, ts, y_ts, rand = DataProcessor.tres_data_splitter(x_data, y_data, split_array[x])
+
+        y_train_list.append(y_tr)
+
+        w_params = multi_linear_regressor(tr, y_tr)
+
+        train_g_model = get_r_data(tr, w_params)
+
+        cod_tr_l.append(calculate_cod(train_g_model, y_tr))
+
+        val_list.append(val)
+        y_val_list.append(y_val)
+
+        test_list.append(ts)
+        y_test_list.append(y_ts)
+
+        w_list.append(w_params)
+
+        # use w to get some response data
+        gmodel = get_r_data(val, w_params)
+        cod = calculate_cod(gmodel, y_val)
+        cod_list.append(cod)
+        rand_list.append(rand)
+
+        if best_cod < cod and cod > 0 and cod <= 1:
+            # w_list.append(w_params)
+            best_cod = cod
+            best_params.append(len(w_list)-1)
+            val_best_w.append(w_params)
+            best_rand[0] = rand
+
+    avg_cod1 = np.mean(np.array(cod_list, dtype=np.float), dtype=np.float)
+
+    print(format('\n'))
+    print("the best params are")
+    print(best_params)
+    print(format('\n'))
+
+    # get test the w's on the test data
+    for i in range(0, len(test_list)):
+
+        for x in range(len(best_params)):
+            g_model = get_r_data(test_list[i], w_list[x])
+            cod = calculate_cod(g_model, y_ts)
+
+            # if cod < best_cod2:
+            if best_cod2 < cod and cod > 0 and cod <= 1:
+
+                best_cod2 = cod
+                best_params2.append(w_list[x])
+
+    # average the parmeters so I can use the average of each one
+    # as one set of parameters
+    w_col_sum = list(w_list[0])
+    # list((map(operator.add, listsum, w_list[l])))
+    div_list = [(len(w_list))]
+
+    for l in range(1, len(w_list)):
+        w_col_sum = list(map(operator.add, w_col_sum, w_list[l]))
+        div_list.append(len(w_list))
+
+    avg_w = list(map(operator.truediv, w_col_sum, div_list))
+
+    best_cod_avg = 1000
+
+    cod_list_avg = list()
+
+    print(format('\n'))
+    print("the best params 2 are")
+    print(best_params2)
+    print(format('\n'))
+
+
+    #  try using the averages of the best scoring parameters
+    for i in range(0, len(test_list)):
+        g_model = get_r_data(test_list[i], avg_w)
+        cod = calculate_cod(g_model, y_ts)
+        cod_list_avg.append(cod)
+        if best_cod2 < cod and cod > 0 and cod <= 1:
+            best_cod_avg = cod
+
+    avg_cod_avg = np.mean(np.array(cod_list_avg, dtype=np.float), dtype=np.float)
+
+    avg_cod2 = np.mean(np.array(cod_list2, dtype=np.float), dtype=np.float)
+
+    ret_list = [[cod_list, best_cod, avg_cod1, rand_list, best_rand],
+                [cod_list2, best_cod2, avg_cod2],
+                [cod_list_avg, best_cod_avg, avg_cod_avg]]
+
+    return ret_list
+
+
+# used to attain the best test size with the highest coefficient of determination
+# can use split_array to either run multiple runs of the same size array to get an average error
+# or have differnt sizes in the array to look for the best size vs cod
+def train_model_cod_tresB(x_data, y_data, split_array):
+    # training_data, validation_data, y_training, y_validation
+    # print(format("\n"))
+    # print(len(x_data))
+    # split_array = int(len(x_data) / 16)
+
+    best_cod = 0
+    best_cod2 = 0
+    best_cod3 = 0
+    bs = list()
+    cod_list = list()
+    cod_list2 = list()
+    length_array = len(split_array)
+    best_split = []
+    best_rand = list(list([1]))
+    rand_list = list()
+    w_list = list()
+
+    train_list = list()
+    y_train_list = list()
+    best_train_params = list()
+    cod_tr_l = list()
+    train_cod_avg = 0
+
+    val_list = list()
+    y_val_list = list()
+    val_best_w = list()
+    cod_val_l = list()
+    val_cod_avg = 0
+
+
+    test_list = list()
+    y_test_list = list()
+    test_best_w = list()
+    cod_test_l = list()
+    test_cod_avg = 0
+
+    best_params = list()
+    best_params2 = list()
+
+    # while len(validation_set) >= 10:
+    for x in range(0, length_array):
+        tr, val, y_tr, y_val, ts, y_ts, rand = DataProcessor.tres_data_splitter(x_data, y_data, split_array[x])
+        '''
+        print('len(train_set)')
+        print(len(train_set))
+        print('length of validation_set')
+        print(len(validation_set))
+        print('length of y_training')
+        print(len(y_training))
+        print('length of y_validation')
+        print(len(y_validation))
+        '''
+
+        train_list.append(tr)
+        y_train_list.append(y_tr)
+
+        w_params = multi_linear_regressor(tr, y_tr)
+        w_list.append(w_params)
+
+        train_g_model = get_r_data(tr, w_params)
+
+        cod_tr_l.append(calculate_cod(train_g_model, y_tr))
+
+        val_list.append(val)
+        y_val_list.append(y_val)
+
+        test_list.append(ts)
+        y_test_list.append(y_ts)
+
+        if best_cod < cod_tr_l[-1] and cod_tr_l[-1] > 0 and cod_tr_l[-1] <= 1:
+            best_cod = cod_tr_l[-1]
+            #best_train_params.append(w_params)
+            best_train_params.append(x)
+
+
+    train_cod_avg = np.mean(np.array(cod_tr_l, dtype=float), dtype=float)
+
+    '''
+        # use w to get some response data
+        gmodel = get_r_data(val, w_params)
+        cod = calculate_cod(gmodel, y_val)
+        cod_list.append(cod)
+        rand_list.append(rand)
+
+        if best_cod < cod and cod > 0 and cod <= 1:
+            #w_list.append(w_params)
+            best_cod = cod
+            best_params.append(len(w_list)-1)
+            val_best_w.append(w_params)
+            bs = split_array[x]
+            best_rand[0] = rand
+
+    avg_cod1 = np.mean(np.array(cod_list, dtype=np.float), dtype=np.float)
+
+    print(format('\n'))
+    print("the best params are")
+    print(best_params)
+    print(format('\n'))
+'''
+
+
+    for i in range(len(val_list)):
+        val_g = get_r_data(val_list[i], w_list[i])
+        cod_val_l.append(calculate_cod(val_g, y_val_list[i]))
+        if best_cod2 < cod_val_l[-1] and cod_val_l[-1] > 0 and cod_val_l[-1] <= 1:
+            best_cod2 = cod_val_l[-1]
+            #val_best_w.append(w_list[i])
+            val_best_w.append(i)
+
+    val_cod_avg = np.mean(np.array(cod_val_l, dtype=float), dtype=float)
+
+
+
+    # get test the w's on the test data
+    for i in range(0, len(test_list)):
+        g_model = get_r_data(test_list[i], w_list[i])
+        cod_test_l.append(calculate_cod(g_model, y_test_list[i]))
+        if best_cod3 < cod_test_l[-1] and cod_test_l[-1] > 0 and cod_test_l[-1] <= 1:
+            best_cod3 = cod_test_l[-1]
+            #test_best_w.append(w_list[i])
+            test_best_w.append(i)
+
+    test_cod_avg = np.mean(np.array(cod_test_l, dtype=float), dtype=float)
+    '''
+    # average the parmeters so I can use the average of each one
+    # as one set of parameters
+    w_col_sum = list(w_list[0])
+    # list((map(operator.add, listsum, w_list[l])))
+    
+    w_len = len(w_list)
+    
+    div_list = list(w_len)
+
+    for l in range(1, len(w_list)):
+        w_col_sum = list(map(operator.add, w_col_sum, w_list[l]))
+        div_list.append(len(w_list))
+
+    avg_w = list(map(operator.truediv, w_col_sum, div_list))
+
+    best_cod_avg = 1000
+
+    cod_list_avg = list()
+
+    print(format('\n'))
+    print("the best params 2 are")
+    print(best_params2)
+    print(format('\n'))
+
+
+    #  try using the averages of the best scoring parameters
+    for i in range(0, len(test_list)):
+        g_model = get_r_data(test_list[i], avg_w)
+        cod = calculate_cod(g_model, y_ts)
+        cod_list_avg.append(cod)
+        if best_cod2 < cod and cod > 0 and cod <= 1:
+        #if cod < best_cod_avg:
+            best_cod_avg = cod
+'''
+
+
+    # avg_cod_avg = np.mean(np.array(cod_list_avg, dtype=np.float), dtype=np.float)
+
+    # avg_cod2 = np.mean(np.array(cod_list2, dtype=np.float), dtype=np.float)
+
+    ret_list = [[cod_tr_l, best_cod, best_train_params, train_cod_avg],
+                [cod_val_l, best_cod2, val_best_w, val_cod_avg],
+                [cod_test_l, best_cod3, test_best_w, test_cod_avg]]
+
+    return ret_list
+
+
+# used to attain the best test size with the hightest coefficient of determination
+def train_model_lse_tres(x_data, y_data, split_array):
+    # training_data, validation_data, y_training, y_validation
+    # print(len(Xdata))
+
+    print(format("\n"))
+
+    bs = list()
+    best_ls = 1000
+    best_mse = 1000
+    best_mse2 = 1000
+    ls_list = list()
+    ls_list2 = list()
+    ls_list_avg = list()
+    rand_list = list()
+    best_rand = list(list([0]))
+    w_list  = list()
+    test_list = list()
+    y_test_list = list()
+
+    # train_set, validation_set, y_training, y_validation = DataProcessor.dos_data_splitter(Xdata, Ydata, split_array)
+    # while len(validation_set) >= 10:
+
+    for x in range(0, len(split_array)):
+        '''
+        print('len(train_set)')
+        print(len(train_set))
+        print('length of validation_set')
+        print(len(validation_set))
+        print('length of y_training')
+        print(len(y_training))
+        print('length of y_validation')
+        print(len(y_validation))
+        '''
+
+        tr, val, y_tr, y_val, ts, y_ts, rand = DataProcessor.tres_data_splitter(x_data, y_data, split_array[x])
+
+        # get the parameters from the regression
+        w_params = multi_linear_regressor(tr, y_tr)
+
+        test_list.append(ts)
+        y_test_list.append(y_ts)
+        w_list.append(w_params)
+
+        # use w to get some response data
+        gmodel = get_r_data(val, w_params)
+        ls = least_squares_estimate(gmodel, y_val)
+        ls_list.append(ls)
+        rand_list.append(rand)
+        if ls < best_ls:
+            best_ls = ls
+            bs = split_array[x]
+            best_rand[0] = rand
+
+    avg_ls1 = np.mean(np.array(ls_list, dtype=np.float), dtype=np.float)
+
+    # get test the w's on the test data
+    for i in range(0, len(w_list)):
+
+        g_model = get_r_data(test_list[i], w_list[i])
+        lse = least_squares_estimate(g_model, y_ts)
+        ls_list2.append(lse)
+
+        if lse < best_mse2:
+            best_lse2 = lse
+
+    # average the parmeters so I can use the average of each one
+    # as one set of parameters
+    w_col_sum = list(w_list[0])
+    # list((map(operator.add, listsum, w_list[l])))
+    div_list = [(len(w_list))]
+
+    for l in range(1, len(w_list)):
+        w_col_sum = list(map(operator.add, w_col_sum, w_list[l]))
+        div_list.append(len(w_list))
+
+    avg_w = list(map(operator.truediv, w_col_sum, div_list))
+
+    best_ls_avg = 1000
+
+    ls_list_avg = list()
+
+    for i in range(0, len(test_list)):
+        g_model = get_r_data(test_list[i], avg_w)
+        lse = least_squares_estimate(g_model, y_ts)
+        ls_list_avg.append(lse)
+        if lse < best_ls_avg:
+            best_lse_avg = lse
+
+    avg_lse_avg = np.mean(np.array(ls_list_avg, dtype=np.float), dtype=np.float)
+
+    avg_lse2 = np.mean(np.array(ls_list2, dtype=np.float), dtype=np.float)
+
+    ret_list = [[ls_list, best_ls, avg_ls1, rand_list, best_rand],
+                [ls_list2, best_lse2, avg_lse2],
+                [ls_list_avg, best_lse_avg, avg_lse_avg]]
+
+    return ret_list
+
+
+# used to attain the best test size with the highest coefficient of determination
+def train_model_mse_tres(x_data, y_data, split_array):
+    # training_data, validation_data, y_training, y_validation
+    print(format("\n"))
+    # bs = list()
+    best_mse = 1000
+    best_mse2 = 1000
+    mse_list = list()
+    mse_list2 = list()
+    best_rand = list(list([0]))
+    rand_list = list()
+    w_list = list()
+    test_list = list()
+    y_test_list = list()
+
+    for x in range(0, len(split_array)):
+        tr, val, y_tr, y_val, ts, y_ts, rand = DataProcessor.tres_data_splitter(x_data, y_data, split_array[x])
+
+        w_params = multi_linear_regressor(tr, y_tr)
+
+        test_list.append(ts)
+        y_test_list.append(y_ts)
+        w_list.append(w_params)
+
+        # use w to get some response data
+        g_model = get_r_data(val, w_params)
+        rand_list.append(rand)
+        mse = mean_square_error(g_model, y_val)
+        mse_list.append(mse)
+        rand_list.append(rand)
+
+        if mse < best_mse:
+            best_mse = mse
+            # bs = split_array[x]
+            best_rand[0] = rand
+
+    avg_mse1 = np.mean(np.array(mse_list, dtype=np.float), dtype=np.float)
+
+    for i in range(0, len(w_list)):
+        g_model = get_r_data(test_list[i], w_list[i])
+        mse = mean_square_error(g_model, y_ts)
+        mse_list2.append(mse)
+
+        if mse < best_mse2:
+            best_mse2 = mse
+
+    w_col_sum = list(w_list[0])
+    # list((map(operator.add, listsum, w_list[l])))
+    div_list = [(len(w_list))]
+
+    for l in range(1, len(w_list)):
+        w_col_sum = list(map(operator.add, w_col_sum, w_list[l]))
+        div_list.append(len(w_list))
+
+    avg_w = list(map(operator.truediv, w_col_sum, div_list))
+
+    best_mse_avg = 1000
+
+    mse_list_avg = list()
+
+    for i in range(0, len(test_list)):
+        g_model = get_r_data(test_list[i], avg_w)
+        mse = mean_square_error(g_model, y_ts)
+        mse_list_avg.append(mse)
+        if mse < best_mse_avg:
+            best_mse_avg = mse
+
+    avg_mse_avg = np.mean(np.array(mse_list_avg, dtype=np.float), dtype=np.float)
+
+    avg_mse2 = np.mean(np.array(mse_list2, dtype=np.float), dtype=np.float)
+
+    ret_list = [[mse_list, best_mse, avg_mse1, rand_list, best_rand],
+                [mse_list2, best_mse2, avg_mse2],
+                [mse_list_avg, best_mse_avg, avg_mse_avg]]
+
+    return ret_list
+
 # -------------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------Error Functions----------------------------------------------
@@ -126,11 +916,7 @@ def train_model_mse_dos(x_data, y_data, split_array):
 
 # calculates the Mean Square Error
 def calculate_cod(g_model, r_validate):
-    # get the mean of the validation data
-    # print(format('\n'))
-    # print("length of r validate")
-    # print(len(r_validate))
-    # print(format('\n'))
+
     r_mean = np.mean(r_validate)
     bottom = 0
     top = 0
@@ -147,8 +933,8 @@ def mean_square_error(d_array, yarray):
     difference_list = []
     for idx in range(n):
         diff = d_array[idx] - yarray[idx]
-        #difference_list.append(pow(diff, 2))
-        difference_list.append(np.absolute(diff))
+        difference_list.append(pow(diff, 2))
+        # difference_list.append(np.absolute(diff))
     return np.mean(np.array(difference_list, dtype=np.float64))
 
 
@@ -165,7 +951,7 @@ def least_squares_estimate(d_array, y_array):
 # --------------------------------------------------------------------------------------------------------------------
 
 # -------------------------------------------Regression Functions------------------------------------------------------
-
+# get a set of y's using x_data and parameters w
 def get_r_data(x_data, w):
     r = []
 
@@ -178,37 +964,33 @@ def get_r_data(x_data, w):
     wnp = np.array(w, dtype=np.float64)
     for row in range(len(x_data)):
         x_observation = list()
-        #x_observation.append(1)
+        # x_observation.append(1)
         for col in range(len(x_data[0])):
             x_observation.append(x_data[row][col])
         r.append(np.dot(np.array(x_observation, dtype=np.float64), wnp))
     return r
 
+
 # used for linear regression imputation
 def getlinregmissingdata(regdata, baddic, w):
     r = []
 
-    #print('----------------------------------------------------------------regdata')
-    #print(regdata)
+    # print('----------------------------------------------------------------regdata')
+    # print(regdata)
 
     for entry in baddic:
         dlist = baddic[entry]
         for row in dlist:
-            #print('------------row')
-            #print(row)
-            x = []
+            # print('------------row')
+            # print(row)
+            x = list()
             x.append(1)
             for col in range(len(regdata[0])-1):
                 if col != entry:
                     x.append(regdata[row][col])
             Xnp = np.array(x, dtype=np.float64)
             Wnp = np.array(w, dtype=np.float64)
-            '''
-            print('length of Wnp')
-            print(Wnp)
-            print('length Xnp')
-            print(Xnp)
-            '''
+
             r.append(np.dot(Xnp, Wnp))
     return r
 
@@ -225,7 +1007,6 @@ def multi_linear_regressor(x_data, y_data):
             nlist.append(x_data[r][c])
         xnew.append(nlist)
      '''
-
 
     x = np.array(x_data, dtype=np.float)
     y = np.array(y_data, dtype=np.float)
@@ -349,6 +1130,8 @@ def forward_selector(x_data, y_data, split):
     col_size = len(x_data[0])
     used_col = []
 
+    cols_f = list()
+
     found = True
 
     addcol = [2000]
@@ -405,20 +1188,20 @@ def forward_selector(x_data, y_data, split):
             if col not in used_col:
                 # print('col')
                 #    print(col)
-                Ftmp = F[:]
+                f_tmp = F[:]
                 # Fsaver.count()
 
                 # create a temp F array
                 # each row of Ftmp contains a list
                 # adds the current column
                 for row in range(nx):
-                    Ftmp[row].append(x_data[row][col])
+                    f_tmp[row].append(x_data[row][col])
 
                 #       print('in for Ftmp')
                 #      print(Ftmp)
 
                 # split the data into training and validation sets
-                train, validation, y_training, y_validation, rand = DataProcessor.dos_data_splitter(Ftmp, y_data, split)
+                train, validation, y_training, y_validation, rand = DataProcessor.dos_data_splitter(f_tmp, y_data, split)
 
                 # perform linear regression to get W params
                 w_params = multi_linear_regressor(train, y_training)
@@ -429,7 +1212,7 @@ def forward_selector(x_data, y_data, split):
                 # calculate the mean square error for this x column
                 mse = mean_square_error(gmodel, y_validation)
                 for row in range(nx):
-                    Ftmp[row].pop()
+                    f_tmp[row].pop()
                 #     print('Ftmp is now')
                 #    print(Ftmp)
                 #   print(format("\n"))
@@ -440,9 +1223,10 @@ def forward_selector(x_data, y_data, split):
                     #      print('found new min mse as '+ str(mse) + ' at col ' + str(col))
                     mininmum_mse[0] = mse
                     addcol[0] = col
+                    cols_f.append(col)
                     found = True
                     # Fsaver = list(Ftmp)
-                del Ftmp[col]
+                del f_tmp[col]
                 # print('Ftmp is now')
                 # print(Ftmp)
                 # if col not in used_col:
@@ -475,3 +1259,216 @@ def forward_selector(x_data, y_data, split):
         #    F[row].append(flist)
 
     return F, mininmum_mse[0]
+
+
+# attempts to do forward selection
+def forward_selector_test(x_data, y_data, split):
+
+    nx = len(x_data)
+    # print('X data is ')
+    # print(x_data)
+    # print(len(x_data))
+    ny = len(y_data)
+    col_size = len(x_data[0])
+    used_col = []
+
+    cols_f = list()
+
+    found = True
+
+    addcol = [2000]
+
+    mininmum_mse = [10000]
+
+    F = list()
+    Fsaver = list()
+
+    # find the first variable  array to add to F as well its mean square error
+    min_col, min_mse, best_col = find_first(x_data.copy(), y_data.copy(), split)
+
+    '''
+    print('min_col')
+    print(min_col)
+    print(format("\n"))
+
+    print('min_mse')
+    print(min_mse)
+    print(format("\n"))
+
+    print('best_col')
+    print(best_col[0])
+    print(len(best_col[0]))
+    print(format("\n"))
+    '''
+
+    cols_f.append(min_col[0])
+
+    mininmum_mse[0] = min_mse
+
+    # used to ignore column 1
+    used_col.append(0)
+    used_col.append(min_col[0])
+    mininmum_mse[0] = min_mse[0]
+
+    # set up F array
+    for row in range(nx):
+        flist = [1.0]
+        F.append(flist)
+
+    for row in range(nx):
+        F[row].append(best_col[0][row])
+
+    # print('in side funct F')
+    # print(F)
+
+    # while old_error > new_error:
+    while found:
+        found = False
+        # go through all columns checking for the min mse value ans storeing that x column
+        #   print(format("\n"))
+        #  print('--------------------------------------------------------------------Starting for loop ')
+        #  print('Length of F', len(F[0]))
+        #  print(format("\n"))
+        #  print(format("\n"))
+        for col in range(1, col_size):
+            if col not in used_col:
+                # print('col')
+                #    print(col)
+                f_tmp = F[:]
+                # Fsaver.count()
+
+                # create a temp F array
+                # each row of Ftmp contains a list
+                # adds the current column
+                for row in range(nx):
+                    f_tmp[row].append(x_data[row][col])
+
+                #       print('in for Ftmp')
+                #      print(Ftmp)
+
+                # split the data into training and validation sets
+                train, validation, y_training, y_validation, rand = DataProcessor.dos_data_splitter(f_tmp, y_data, split)
+
+                # perform linear regression to get W params
+                w_params = multi_linear_regressor(train, y_training)
+
+                # use w to get some response data
+                gmodel = get_r_data(validation, w_params)
+
+                # calculate the mean square error for this x column
+                mse = mean_square_error(gmodel, y_validation)
+                for row in range(nx):
+                    f_tmp[row].pop()
+                #     print('Ftmp is now')
+                #    print(Ftmp)
+                #   print(format("\n"))
+                #   print('new mse')
+                #   print(mse)
+
+                if mse < mininmum_mse[0]:
+                    #      print('found new min mse as '+ str(mse) + ' at col ' + str(col))
+                    mininmum_mse[0] = mse
+                    addcol[0] = col
+                    found = True
+                    # Fsaver = list(Ftmp)
+                del f_tmp[col]
+                # print('Ftmp is now')
+                # print(Ftmp)
+                # if col not in used_col:
+                #   used_col.append(col)
+            # else:
+                # print('column ' + str(col) + ' is alread used')
+
+                # x_add = GetColumn(x_data, addcol)
+        # print(format("\n"))
+        # print(format("\n"))
+        # print('The for loop ended')
+        # print(format("\n"))
+        # print(format("\n"))
+        if not found:
+            #   print('no better mse was found')
+            break
+        else:
+            # add the saved column to F
+            #  print("found a new variable to add: " + str(addcol[0]))
+            for row in range(nx):
+                F[row].append(x_data[row][addcol[0]])
+            used_col.append(addcol[0])
+            cols_f.append(addcol[0])
+            if len(F) == col_size + 1:
+                break
+        # add best column
+        # for row in range(nx):
+        # flist.append(x_add[row])
+
+        # for row in range(nx):
+        #    F[row].append(flist)
+
+    return F, mininmum_mse[0], cols_f
+
+
+# ------------------------------------------Display functions--------------------------------------------------
+# will display the original data array and the dependent and independent portions
+def show_data_x_y(d_a, x, y):
+
+    print('Data Array:')
+    print(d_a)
+    print('Dependent Data:')
+    print(x)
+    print('Independent Data:')
+    print(y)
+    return
+
+
+def show_stat_array(stat_a):
+    print(format('\n'))
+    print('sample mean array')
+    print(stat_a[0])
+    print(format('\n'))
+    print('sample std array')
+    print(stat_a[1])
+    print(format('\n'))
+    print('Min array')
+    print(stat_a[2])
+    print(format('\n'))
+    print('Max array')
+    print(stat_a[3])
+    print(format('\n'))
+    return
+
+
+def show_test_results(imp_name, err_name, result_l, prec1, prec2):
+    print('Imputation type: ' + imp_name)
+    print('Error Checking  method: ' + err_name)
+
+    # tr1_info = ret_list[0]
+    # val1_info = ret_list[1]
+    # avg_cod_avg_val = ret_list[2][1]
+    # avg_cod_avg_tr = ret_list[2][0]
+
+    # val2_info = ret_list[1]
+
+    # [tr_cod, tr_best, best_codtr, best_w_idx_tr, tr_avg_cod ],
+
+    print('-----training info------')
+    print('Best Training cod')
+    print(result_l[0][1])
+    print('Best cod idx')
+    print(result_l[0][3])
+    print('best training avg cod ')
+    print(np.around(result_l[0][4], prec1))
+
+    print('-----validation info------')
+    print('Best Validation cod')
+    print(result_l[1][1])
+    print('Best Validation cod idx')
+    print(result_l[1][3])
+    print('Best Validation avg cod ')
+    print(np.around(result_l[1][4], prec1))
+
+    print('------avg using an avg w---')
+    print('Validation new avg cod')
+    print(np.around(result_l[2][1], prec2))
+    print('Training new avg cod')
+    print(np.around(result_l[2][0], prec2))
+    return
