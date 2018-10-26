@@ -104,8 +104,8 @@ def dos_data_splitter(xdata, ydata, splitval_array):
         row = random_selection[idx]
         training_data.append(xdata[row])
         y_training.append(ydata[row])
+
     # grab validation data set
-    #for idx in range(train_limit, val_limit+train_limit):
     for idx in range(train_limit, val_limit):
         row = random_selection[idx]
         validation_data.append(xdata[row])
@@ -751,7 +751,7 @@ def get_basic_stats(data_array, continuous_discrete):
 
     min_a, max_a = max_min_array_getter(data_array)
 
-    return smu, std, min_a, max_a,
+    return smu, std, min_a, max_a
 
 
 # ------------------------------------------------------------------------------------------------------
